@@ -209,8 +209,8 @@ displaced rect: (-142.55720079832, 461.6706041925653) LINE: (-55.6367095600847, 
 		this.dash_cooldown = dash_cooldown_max;
 	}
 	
-	public void knock_back(Vector2 dir) {
-		this.player.vel.set(dir._mult(this.player.combat.knockback));
+	public void knockback(Vector2 dir) {
+		this.player.vel.set(dir._mult(dir.x != 0 ? this.player.combat.slash_h_knockback : this.player.combat.slash_v_knockback));
 		this.player.momentum.set(Vector2.zero);
 	}
 	

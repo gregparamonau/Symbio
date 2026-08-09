@@ -16,6 +16,8 @@ public class PlayerCombat {
 	static int slash_direction_buffer_max = 2, slash_length = 5, slash_cooldown_max = 10, slash_buffer_max = 5;
 	public boolean slashing = false, slash_held = false;
 	
+	public double slash_h_knockback = 6, slash_v_knockback = 8;
+	
 	public Vector2 slash_bounds = new Vector2(35, 24);
 	public Vector2 offset_slash = new Vector2(10, 12);
 	
@@ -25,7 +27,7 @@ public class PlayerCombat {
 	public boolean respawn_set = false;
 	public int health_full = 7;
 	public int health = health_full;
-	public int knockback = 5;
+	public int knockback = 8;
 	public int enemy_knockback_horizontal = 3, enemy_knockback_vertical = 10;
 		
 	public int invincibility_frames = 0;
@@ -80,8 +82,9 @@ public class PlayerCombat {
 		
 		for (int x = 0; x<Game.current_room.enemies.length; x++) {
 			if (Rectangle.intersect(hb, Game.current_room.enemies[x])) {
-				Game.current_room.enemies[x].damage(this.slash_strength, this.slash_dir.norm()._mult(this.slash_dir.x != 0 ? enemy_knockback_horizontal : enemy_knockback_vertical));
-				this.slash_effects();
+				if (Game.current_room.enemies[x].damage(this.slash_strength, this.slash_dir.norm()._mult(this.slash_dir.x != 0 ? enemy_knockback_horizontal : enemy_knockback_vertical))) {
+					this.slash_effects();
+				}
 			}
 		}
 		System.out.println("SLASH");
@@ -92,7 +95,7 @@ public class PlayerCombat {
 	}
 	
 	public void slash_effects() {
-		this.player.movement.knock_back(this.slash_dir._mult(-1).norm());
+		this.player.movement.knockback(this.slash_dir._mult(-1).norm());
 		this.player.movement.dash_num = this.player.movement.dash_keep;
 	}
 	

@@ -17,7 +17,6 @@ public class Enemy extends Rectangle{
 	public int id;
 	public boolean damaged = false, airborn = false;
 	public Vector2 momentum = new Vector2(), vel = new Vector2();
-	public int freeze = 0;
 	
 	public int health;
 	public int damage_cooldown = 0;
@@ -78,12 +77,13 @@ public class Enemy extends Rectangle{
 	}
 	public void knockback(Vector2 dir) {
 		this.momentum.set(dir._mult(1.0 / this.mass));
+		this.vel.set(new Vector2());
 	}
 	
 	public void momentum_damp() {
 		double l = this.momentum.l();
-		if (l < 1e-3) return;
-		this.momentum.mult(Math.max(l - 1, 0) / l);
+		if (l < 1e-3) this.momentum.set(new Vector2());//return;
+		this.momentum.mult(0.75);
 	}
 	
 	public void die() {

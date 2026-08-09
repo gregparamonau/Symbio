@@ -44,10 +44,7 @@ public class Scuttler extends Enemy{
 	public void update() {
 		this.anim.flip = this.dir == 1;
 		if (this.damage_cooldown > 0) this.damage_cooldown--;
-		if (this.freeze > 0) {
-			this.freeze--;
-			return;
-		}
+
 		
 		this.move(Vector2.add(this.ai(), Vector2.add(this.momentum, this.vel)));
 		this.apply_env_forces();
@@ -59,7 +56,6 @@ public class Scuttler extends Enemy{
 		
 		if (this.collide(out) || !this.collide(Vector2.add(out, new Vector2(this.dir * this.width, -1.2)))) {
 			dir *= -1;
-			if (this.momentum.l() == 0) this.freeze = 5;
 		}
 		
 		return new Vector2(this.dir * velx, 0);
