@@ -49,10 +49,16 @@ public class Enemy extends Rectangle{
 		this.vel.x = Math.signum(this.vel.x) * Math.max(0, Math.abs(this.vel.x) - ground_drag);
 		//this.momentum.y = -2;//Math.max(max_fall_speed, this.momentum.y - 0.2);
 	}
-	public void displace() {
+	public Vector2 displace() {
 		for (int x = 0; x<Game.current_room.objects.length; x++) {
-			this.pos.add(Game.current_room.objects[x].displace_entity(this, 0));
+			Vector2 disp = Game.current_room.objects[x].displace_entity(this, 0);
+			if (disp.x != 0 || disp.y != 0) {
+				this.pos.add(disp);
+				//this.vel.set(new Vector2());
+				return disp;
+			}
 		}
+		return Vector2.zero;
 	}
 	
 	public Vector2 ai() {

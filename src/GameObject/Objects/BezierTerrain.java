@@ -66,6 +66,8 @@ public class BezierTerrain extends GameObject{
 		
 		this.pol = new Polygon(this.shape.to_polygon(this.start_full));
 		this.pol.get_bounds();
+		this.pos.set(this.pol.bounds.pos);
+		this.last_pos.set(this.pol.bounds.pos);
 	}
 	
 	public Polygon get_pol() {
@@ -165,11 +167,15 @@ public class BezierTerrain extends GameObject{
 		//if (!Rectangle.intersect(in, this.shape.bounding_box)) return;
 		for (int i = 0; i < 1; i++) {
 			Line l = this.shape.intersect_rect(in);
+			if (in instanceof Enemy) System.out.println(in + " " + l);
 			if (l == null) continue;
 			
 			out.add(Line.disp_rect(ln, in, direction));
 		}
-		return Vector2.add(out, Vector2.sub(this.pos, this.last_pos));
+		
+		Vector2 out_F = Vector2.add(out, Vector2.sub(this.pos, this.last_pos));
+		System.out.println("OUT: " + out + " vel: " + Vector2.sub(this.pos, this.last_pos) + " OUTF: " + out_F + " ID: " + this.id);
+		return out_F;//Vector2.add(out, Vector2.sub(this.pos, this.last_pos));
 		
 
 	}

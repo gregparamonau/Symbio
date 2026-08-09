@@ -24,17 +24,20 @@ public class Animation {
 	//all animations are by default 10 frames long (and only that option) (so 10 frames per second)
 	//fliph across horizontal
 	//flipv across vertical
-	public Animation(String file, Vector2 pos, int length, int frequency, boolean create_flip, boolean repeating) {
+	public Animation(String file, Vector2 pos, boolean create_flip) {
 		this.pos = pos;
-		this.frequency = frequency;
-		this.length = length;
-		this.repeating = repeating;
 		try {
 			BufferedImage temp = ImageIO.read(getClass().getResource(file));
 			
+			//first column of sprite sheet contains info about frequency, and length of an animation.
+			this.length = temp.getRGB(0, 0) & 16777215;
+			System.out.println(temp.getRGB(0, 0) + " " + file);
+			this.frequency = temp.getRGB(0, 1) & 16777215;
+			this.repeating = temp.getRGB(0, 2) == Color.white.getRGB();
+			
 			this.sprites = new BufferedImage[(create_flip ? 2 : 1)][this.length];
 			for (int x = 0; x<this.length; x++) {
-				this.sprites[0][x] = temp.getSubimage(x * temp.getWidth() / this.length, 0, temp.getWidth() / this.length, temp.getHeight());
+				this.sprites[0][x] = temp.getSubimage(x * temp.getWidth() / this.length + 1, 0, (temp.getWidth() - 1) / this.length, temp.getHeight());
 				if (create_flip) this.sprites[1][this.length - x - 1] = Utility.flip(this.sprites[0][x], false, true);
 			}
 			

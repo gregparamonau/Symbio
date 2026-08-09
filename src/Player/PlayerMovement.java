@@ -107,7 +107,7 @@ displaced rect: (-142.55720079832, 461.6706041925653) LINE: (-55.6367095600847, 
 	}
 	
 	public void update_physics() {
-		if (this.player.combat.slashing) this.gravity = Math.min(this.gravity, 1);
+		if (this.player.combat.slashing || this.player.combat.pogo) this.gravity = Math.min(this.gravity, 1);
 		
 		//gravity --> y
 		this.player.vel.y -= this.gravity * Game.speed_mult;

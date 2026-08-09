@@ -31,7 +31,7 @@ public class Camera {
 	public static Vector2 HUD_offset;
 	public Animation health_sprite;
 	
-	public static final double pixel_size_game = 5, pixel_size_edit = 4;
+	public static final double pixel_size_game = 6, pixel_size_edit = 4;
 	
 	public static final int tile_size = 8;
 	public static double pixel_size = pixel_size_game;
@@ -115,7 +115,7 @@ public class Camera {
 	}
 	public void draw_HUD(Graphics g) {
 		for (int x = 0; x<Game.player.combat.health; x++) {
-			new Rectangle(HUD_offset.x + this.pos.x + (x * 2 + 1) * tile_size, HUD_offset.y + this.pos.y - tile_size, 0, 0).draw_with_sprite(g, Start.pane, this.pos.x, this.pos.y, this.health_sprite.sprites[0][0], "game");
+			//new Rectangle(HUD_offset.x + this.pos.x + (x * 2 + 1) * tile_size, HUD_offset.y + this.pos.y - tile_size, 0, 0).draw_with_sprite(g, Start.pane, this.pos.x, this.pos.y, this.health_sprite.sprites[0][0], "game");
 		}
 	}
 	public void draw_grid(Graphics g) {
@@ -200,7 +200,7 @@ public class Camera {
 			this.parallax[0] = Utility.transformed_instance(ImageIO.read(getClass().getResource("/extra_textures/parallax_0.png")), 1, Color.black, 1);
 			this.parallax[1] = Utility.transformed_instance(ImageIO.read(getClass().getResource("/extra_textures/parallax_1.png")), 1, Color.black, 1);
 			this.parallax[2] = Utility.transformed_instance(ImageIO.read(getClass().getResource("/extra_textures/parallax_2.png")), 1, Color.black, 1);
-			this.health_sprite = new Animation(health_sprite_name, this.pos, 1, 60, false, true);
+			//this.health_sprite = new Animation(health_sprite_name, this.pos, 1, 60, false, true);
 			
 			//System.out.println("BW: " + this.back.getWidth() + " BH: " + this.back.getHeight());
 			//System.exit(0);

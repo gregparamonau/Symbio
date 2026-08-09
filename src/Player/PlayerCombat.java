@@ -13,12 +13,12 @@ public class PlayerCombat {
 	public int slash_strength = 5;
 	public Vector2 slash_dir = new Vector2();
 	public int slash_direction_buffer = 0, slash_count = 0, slash_cooldown, slash_buffer;
-	static int slash_direction_buffer_max = 2, slash_length = 5, slash_cooldown_max = 10, slash_buffer_max = 5;
-	public boolean slashing = false, slash_held = false;
+	static int slash_direction_buffer_max = 2, slash_length = 3, slash_cooldown_max = 10, slash_buffer_max = 5;
+	public boolean slashing = false, slash_held = false, pogo = false;
 	
 	public double slash_h_knockback = 6, slash_v_knockback = 8;
 	
-	public Vector2 slash_bounds = new Vector2(35, 24);
+	public Vector2 slash_bounds = new Vector2(36, 24);
 	public Vector2 offset_slash = new Vector2(10, 12);
 	
 	
@@ -54,6 +54,7 @@ public class PlayerCombat {
 		}
 		if (this.slash_direction_buffer > 0 || this.slash_count > 0) this.slash();
 		this.slashing = this.slash_count > 0;
+		this.pogo = this.slash_cooldown > 0 && this.slash_dir.y < 0;
 		this.slash_held = this.player.input.slash && (this.slashing || this.slash_held);
 	}
 	
@@ -78,7 +79,7 @@ public class PlayerCombat {
 			return;
 		}
 		
-		Rectangle hb = new Rectangle(this.player.pos.x + this.slash_dir.x, this.player.pos.y + this.slash_dir.y, (this.slash_dir.x != 0 ? 1 : 0) * this.slash_bounds.x + (this.slash_dir.x == 0 ? 1: 0) * this.slash_bounds.y, (this.slash_dir.y != 0 ? 1.25 : 0) * this.slash_bounds.x + (this.slash_dir.y == 0 ? 1: 0) * this.slash_bounds.y);
+		Rectangle hb = new Rectangle(this.player.pos.x + this.slash_dir.x, this.player.pos.y + this.slash_dir.y, (this.slash_dir.x != 0 ? 1 : 0) * this.slash_bounds.x + (this.slash_dir.x == 0 ? 1: 0) * this.slash_bounds.y, (this.slash_dir.y != 0 ? 1 : 0) * this.slash_bounds.x + (this.slash_dir.y == 0 ? 1: 0) * this.slash_bounds.y);
 		
 		for (int x = 0; x<Game.current_room.enemies.length; x++) {
 			if (Rectangle.intersect(hb, Game.current_room.enemies[x])) {

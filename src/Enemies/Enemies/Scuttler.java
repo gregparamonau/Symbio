@@ -34,7 +34,7 @@ public class Scuttler extends Enemy{
 		
 		this.health = health_save;
 		
-		this.anim = new Animation("/enemy_textures/scuttler.png", this.pos, 10, 6, this.flipped, true);
+		this.anim = new Animation("/enemy_textures/scuttler.png", this.pos, this.flipped);
 		this.anim.start();
 		
 		long l = System.nanoTime();
@@ -81,7 +81,7 @@ public class Scuttler extends Enemy{
 	}
 	
 	public void draw_enemy(Graphics g, JPanel pane, double xin, double yin, String location) {
-		this.draw_border(g, pane, xin, yin, location);
+		//this.draw_border(g, pane, xin, yin, location);
 		this.anim.play(false, Vector2.zero, this.dir == 1, g, pane, xin, yin, location);
 		
 		this.vel.draw_vector(g, pane, xin, yin, location, Color.red, pos);//this.momentum.draw_vector(g, pane, xin, yin, location, Color.red, pos);

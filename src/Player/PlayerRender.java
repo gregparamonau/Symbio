@@ -22,6 +22,7 @@ public class PlayerRender {
 	
 	public static final String idle = "/player_textures/player_idle.png";
 	public static final String run = "/player_textures/player_run.png";
+	public static final String slash_side = "/player_textures/slash_side.png";
 	
 	//antenna logic
 	public static final int antenna_length = 15;
@@ -54,7 +55,7 @@ public class PlayerRender {
 		
 		if (this.interrupt && this.anim.interrupt()) {
 			
-			this.anim = new Animation(anim_name(), this.player.pos, 10, 6, true, true);
+			this.anim = new Animation(anim_name(), this.player.pos, true);
 			
 			this.interrupt = false;
 		}
@@ -70,7 +71,7 @@ public class PlayerRender {
 		}
 		
 		if (this.player.combat.slashing) {
-			Rectangle hb = new Rectangle(this.player.pos.x + this.player.combat.slash_dir.x, this.player.pos.y + this.player.combat.slash_dir.y, (this.player.combat.slash_dir.x != 0 ? 1 : 0) * this.player.combat.slash_bounds.x + (this.player.combat.slash_dir.x == 0 ? 1: 0) * this.player.combat.slash_bounds.y, (this.player.combat.slash_dir.y != 0 ? 1.25 : 0) * this.player.combat.slash_bounds.x + (this.player.combat.slash_dir.y == 0 ? 1: 0) * this.player.combat.slash_bounds.y);
+			Rectangle hb = new Rectangle(this.player.pos.x + this.player.combat.slash_dir.x, this.player.pos.y + this.player.combat.slash_dir.y, (this.player.combat.slash_dir.x != 0 ? 1 : 0) * this.player.combat.slash_bounds.x + (this.player.combat.slash_dir.x == 0 ? 1: 0) * this.player.combat.slash_bounds.y, (this.player.combat.slash_dir.y != 0 ? 1 : 0) * this.player.combat.slash_bounds.x + (this.player.combat.slash_dir.y == 0 ? 1: 0) * this.player.combat.slash_bounds.y);
 			hb.draw(g, pane, xin, yin, location, false);
 		}
 		
@@ -81,6 +82,7 @@ public class PlayerRender {
 		//if (this.player.movement.dash_num == 0) new Vector2(this.player.pos.x, this.player.pos.y + 10).draw_node(g, Start.pane, Game.cam.pos.x, Game.cam.pos.y, "game", Color.red);
 	}
 	public String anim_name() {
+		if (current_state.equals("slash")) return slash_side;
 		if (current_state.equals("run")) {
 			return run;
 		}
@@ -92,6 +94,7 @@ public class PlayerRender {
 	}
 	public String current_state() {
 		//if (this.player.dashing) return "dash";
+		if (this.player.combat.slashing) return "slash";
 		if (this.player.collider.col_down && this.player.vel.x == 0) return "idle";
 		if (this.player.collider.col_down && this.player.vel.x != 0) return "run";
 		//if (this.player.wall_slide) return "wall";
@@ -99,7 +102,7 @@ public class PlayerRender {
 		return "idle";
 	}
 	public void start_animations() {
-		this.anim = new Animation(this.anim_name(), this.player.pos, 10, 6, true, true);
+		this.anim = new Animation(this.anim_name(), this.player.pos, true);
 	}
 	
 	public void start_poss() {
@@ -181,9 +184,10 @@ public class PlayerRender {
 			//Vector2 past = new Vector2(start);
 			
 			//start.add(this.antenna[x]);
+			Color col = new Color(43, 42, 87);
 			
-			new Line(this.antenna[x], this.antenna[x - 1]).draw_line(g, Color.black, in, xin, yin, location, false);
-			new Line(Vector2.add(this.antenna[x], right_offset), Vector2.add(this.antenna[x - 1], right_offset)).draw_line(g, Color.black, in, xin, yin, location, false);;
+			new Line(this.antenna[x], this.antenna[x - 1]).draw_line(g, col, in, xin, yin, location, false);
+			new Line(Vector2.add(this.antenna[x], right_offset), Vector2.add(this.antenna[x - 1], right_offset)).draw_line(g, col, in, xin, yin, location, false);;
 			
 			//g.setColor(null);
 			//left_start.draw_node(g, in, xin, yin, location, Color.magenta);

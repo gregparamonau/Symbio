@@ -96,6 +96,7 @@ public class Vector2 {
 	
 	
 	
+	
 	//utility methods
 	public double l() {
 		return Math.sqrt(this.x * this.x + this.y * this.y);
