@@ -9,6 +9,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
+import Enemies.Enemy;
 import GameObject.GameObject;
 import GameObject.GameTemplate;
 import LevelEdit.LevelEditor;
@@ -118,10 +119,7 @@ public class BezierTerrain extends GameObject{
 		//TODO: rework collision code so that it always works, not just when 
 		if (!Rectangle.intersect(this.shape.bounding_box, in)) return false;
 		
-		this.intersect = this.shape.intersect_rect(in);
-		
-		System.out.println("OCLLIDE BEZ: " + (this.intersect != null) + " ID: " + this.id);
-		
+		this.intersect = this.shape.intersect_rect(in);		
 		return this.intersect != null;
 		
 	}
@@ -154,6 +152,9 @@ public class BezierTerrain extends GameObject{
 	public Vector2 displace_entity(Rectangle in, int direction) {
 		//if (this.object_handle == -1) return;
 		if (!Rectangle.intersect(in, this.shape.bounding_box)) return Vector2.zero;
+		
+		System.out.println("PLAYER: " + (in instanceof Player));
+		if (!(in instanceof Player)) System.out.println(((Enemy)in).id + " " + in);
 		
 		Line ln = this.shape.intersect_rect(in);
 		

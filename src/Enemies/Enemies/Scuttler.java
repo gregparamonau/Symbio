@@ -42,11 +42,12 @@ public class Scuttler extends Enemy{
 	}
 	
 	public void update() {
+		System.out.println(this.id + " " + this);
 		this.anim.flip = this.dir == 1;
 		if (this.damage_cooldown > 0) this.damage_cooldown--;
 
 		
-		this.move(Vector2.add(this.ai(), Vector2.add(this.momentum, this.vel)));
+		this.move(Vector2.add(this.ai(), this.vel));
 		this.apply_env_forces();
 		
 	}
@@ -54,14 +55,15 @@ public class Scuttler extends Enemy{
 	public Vector2 ai() {
 		Vector2 out = new Vector2(this.dir * velx, 0);
 		
-		if (this.collide(out) || !this.collide(Vector2.add(out, new Vector2(this.dir * this.width, -1.2)))) {
+		if (this.collide(out) ||  (!this.collide(Vector2.add(out, new Vector2(this.dir * this.width, -1.2))) && this.collide(new Vector2(0, -1.2)))) {
 			dir *= -1;
 		}
 		
 		return new Vector2(this.dir * velx, 0);
 	}
 	
-	public void damage_function() {
+	public void damage_function(Vector2 dir) {
+		if (dir.x != 0) this.dir = (int)Math.signum(dir.x);
 		return;
 		/*this.freeze = 5;
 		int temp = Utility.sign(Game.player.combat.slash_dir.x);
@@ -82,7 +84,7 @@ public class Scuttler extends Enemy{
 		this.draw_border(g, pane, xin, yin, location);
 		this.anim.play(false, Vector2.zero, this.dir == 1, g, pane, xin, yin, location);
 		
-		this.momentum.draw_vector(g, pane, xin, yin, location, Color.red, pos);
+		this.vel.draw_vector(g, pane, xin, yin, location, Color.red, pos);//this.momentum.draw_vector(g, pane, xin, yin, location, Color.red, pos);
 		
 		////g.drawString("health: " + this.health, (int)temp.x, (int)temp.y);
 		

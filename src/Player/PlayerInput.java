@@ -65,6 +65,10 @@ public class PlayerInput {
 					Game.current_room.objects[x].sb = new SoftBody(new Vector2(Game.current_room.objects[x].pos), ((SBTerrain)Game.current_room.objects[x]).radius, Game.current_room.objects[x].id);
 				}
 			}
+			
+			while(Game.current_room.enemies.length > 0) {
+				Game.current_room.enemies[0].die();
+			}
 		}
 	}
 	

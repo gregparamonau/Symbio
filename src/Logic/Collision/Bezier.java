@@ -170,7 +170,6 @@ public class Bezier {
 		
 		for (int x = 0; x<this.lines.length; x++) {
 			if (!Rectangle.intersect_line(in, this.lines[x].a, this.lines[x].b)) continue;
-			System.out.println("LINE#: " + x);
 			return this.lines[x];
 		}
 		return null;

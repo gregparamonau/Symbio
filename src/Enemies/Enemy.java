@@ -15,13 +15,14 @@ public class Enemy extends Rectangle{
 	
 	public String code;
 	public int id;
-	public boolean damaged = false, airborn = false;
-	public Vector2 momentum = new Vector2(), vel = new Vector2();
+	public boolean damaged = false;
+	public Vector2 vel = new Vector2();
 	
 	public int health;
 	public int damage_cooldown = 0;
 	static int damage_cooldown_max = 5;
 	public double mass = 1;
+	static double ground_drag = 0.5;
 	
 	public static final int enemy_knowckback = 0, contact_damage = 1, max_fall_speed = -10;
 	
@@ -36,19 +37,16 @@ public class Enemy extends Rectangle{
 	
 	public void move(Vector2 move) {
 		this.pos.add(move);
-		//this.pos.add(Vector2.add(move, Vector2.add(this.momentum, this.vel)));
-		
-		//this.momentum.x = Utility.clamp(Utility.sign(this.momentum.x) * (Math.abs(this.momentum.x) - 1), this.momentum.x, 0);
-		//this.apply_gravity();
-		
-		//if (this.momentum.length() != 0) this.momentum = Vector2.scale_to_length(this.momentum, Utility.clamp(this.momentum.length() - 1, 0, this.momentum.length()));
-		
+
 		this.displace();
 	}
 	public void apply_env_forces() {
-		this.vel.y -= 1;
+		//vertical
+		this.vel.y -= 0.75;
 		if (this.vel.y < max_fall_speed) this.vel.y = max_fall_speed;
-		this.momentum_damp();
+		
+		//horizontal
+		this.vel.x = Math.signum(this.vel.x) * Math.max(0, Math.abs(this.vel.x) - ground_drag);
 		//this.momentum.y = -2;//Math.max(max_fall_speed, this.momentum.y - 0.2);
 	}
 	public void displace() {
@@ -67,23 +65,16 @@ public class Enemy extends Rectangle{
 		this.damage_cooldown = damage_cooldown_max;
 		this.damaged = true;
 		if (this.health <= 0) this.die();
-		this.damage_function();
+		this.damage_function(dir);
 		this.knockback(dir);
 		
 		return true;
 	}
-	public void damage_function() {
+	public void damage_function(Vector2 dir) {
 		
 	}
 	public void knockback(Vector2 dir) {
-		this.momentum.set(dir._mult(1.0 / this.mass));
-		this.vel.set(new Vector2());
-	}
-	
-	public void momentum_damp() {
-		double l = this.momentum.l();
-		if (l < 1e-3) this.momentum.set(new Vector2());//return;
-		this.momentum.mult(0.75);
+		this.vel.set(dir._mult(1.0 / this.mass));
 	}
 	
 	public void die() {
