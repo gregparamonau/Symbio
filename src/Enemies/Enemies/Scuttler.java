@@ -16,9 +16,9 @@ import Rendering.Animation;
 public class Scuttler extends Enemy{
 	public static final double save_width = 16, save_height = 10;
 	
-	public static final double vel = 0.6; //subject to change
+	public static final double velx = 0.6; //subject to change
 	
-	public static final int health_save = 20;
+	public static final int health_save = 2000;
 	
 	int dir = 1;
 	
@@ -49,19 +49,20 @@ public class Scuttler extends Enemy{
 			return;
 		}
 		
-		this.move(this.ai());
+		this.move(Vector2.add(this.ai(), Vector2.add(this.momentum, this.vel)));
+		this.apply_env_forces();
 		
 	}
 	
 	public Vector2 ai() {
-		Vector2 out = new Vector2(this.dir * vel, 0);
+		Vector2 out = new Vector2(this.dir * velx, 0);
 		
 		if (this.collide(out) || !this.collide(Vector2.add(out, new Vector2(this.dir * this.width, -1.2)))) {
 			dir *= -1;
 			if (this.momentum.l() == 0) this.freeze = 5;
 		}
 		
-		return new Vector2(this.dir * vel, 0);
+		return new Vector2(this.dir * velx, 0);
 	}
 	
 	public void damage_function() {

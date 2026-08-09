@@ -107,6 +107,7 @@ displaced rect: (-142.55720079832, 461.6706041925653) LINE: (-55.6367095600847, 
 	}
 	
 	public void update_physics() {
+		if (this.player.combat.slashing) this.gravity = Math.min(this.gravity, 1);
 		
 		//gravity --> y
 		this.player.vel.y -= this.gravity * Game.speed_mult;
@@ -208,6 +209,11 @@ displaced rect: (-142.55720079832, 461.6706041925653) LINE: (-55.6367095600847, 
 		this.dash_cooldown = dash_cooldown_max;
 	}
 	
+	public void knock_back(Vector2 dir) {
+		this.player.vel.set(dir._mult(this.player.combat.knockback));
+		this.player.momentum.set(Vector2.zero);
+	}
+	
 	//CLASSES
 	interface PlayerState {
 	    void enter(Player player);
@@ -282,9 +288,9 @@ displaced rect: (-142.55720079832, 461.6706041925653) LINE: (-55.6367095600847, 
 		public void update(Player player, PlayerInput input) {
 			
 			//fall-speeds
-			if (input.down) player.movement.max_fall = max_fall_fast;
-			else if (input.up) player.movement.max_fall = max_fall_slow;
-			else player.movement.max_fall = max_fall_normal;
+			//if (input.down) player.movement.max_fall = max_fall_fast;
+			//else if (input.up) player.movement.max_fall = max_fall_slow;
+			//else player.movement.max_fall = max_fall_normal;
 			
 			//gravities
 			player.movement.jump_gravity();
@@ -307,7 +313,7 @@ displaced rect: (-142.55720079832, 461.6706041925653) LINE: (-55.6367095600847, 
 				
 				//wall jump
 				else if (player.collider.wall_coyote > 0) {
-					player.movement.wall_jump(player.collider.col_left ? 1 : -1/*input.last_dir*/);
+					player.movement.wall_jump(input.last_dir);
 				}
 			}
 			
@@ -457,7 +463,7 @@ displaced rect: (-142.55720079832, 461.6706041925653) LINE: (-55.6367095600847, 
 				//System.out.println("JUMP_dir " + jump_dir);
 				
 				//THIS LINE HERE THIS ONE THIS OEN
-				player.movement.wall_jump(player.collider.col_left ? 1 : -1/*input.last_dir*/);//(input.left ? -1 : input.right ? 1 : 0);//(jump_dir);//(input.left ? -1 : input.right ? 1 : 0);
+				player.movement.wall_jump(input.last_dir);//(input.left ? -1 : input.right ? 1 : 0);//(jump_dir);//(input.left ? -1 : input.right ? 1 : 0);
 				player.movement.set_state(new Air());
 				return;
 			}

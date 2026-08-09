@@ -16,11 +16,13 @@ public class Enemy extends Rectangle{
 	public String code;
 	public int id;
 	public boolean damaged = false, airborn = false;
-	public Vector2 momentum = new Vector2();
+	public Vector2 momentum = new Vector2(), vel = new Vector2();
 	public int freeze = 0;
 	
 	public int health;
 	public int damage_cooldown = 0;
+	static int damage_cooldown_max = 5;
+	public double mass = 1;
 	
 	public static final int enemy_knowckback = 0, contact_damage = 1, max_fall_speed = -10;
 	
@@ -34,17 +36,21 @@ public class Enemy extends Rectangle{
 	}
 	
 	public void move(Vector2 move) {
-		this.pos.add(Vector2.add(move, this.momentum));
+		this.pos.add(move);
+		//this.pos.add(Vector2.add(move, Vector2.add(this.momentum, this.vel)));
 		
-		this.momentum.x = Utility.clamp(Utility.sign(this.momentum.x) * (Math.abs(this.momentum.x) - 1), this.momentum.x, 0);
-		this.apply_gravity();
+		//this.momentum.x = Utility.clamp(Utility.sign(this.momentum.x) * (Math.abs(this.momentum.x) - 1), this.momentum.x, 0);
+		//this.apply_gravity();
 		
 		//if (this.momentum.length() != 0) this.momentum = Vector2.scale_to_length(this.momentum, Utility.clamp(this.momentum.length() - 1, 0, this.momentum.length()));
 		
 		this.displace();
 	}
-	public void apply_gravity() {
-		this.momentum.y = -2;//Math.max(max_fall_speed, this.momentum.y - 0.2);
+	public void apply_env_forces() {
+		this.vel.y -= 1;
+		if (this.vel.y < max_fall_speed) this.vel.y = max_fall_speed;
+		this.momentum_damp();
+		//this.momentum.y = -2;//Math.max(max_fall_speed, this.momentum.y - 0.2);
 	}
 	public void displace() {
 		for (int x = 0; x<Game.current_room.objects.length; x++) {
@@ -56,18 +62,28 @@ public class Enemy extends Rectangle{
 		return new Vector2(0, 0);
 	}
 	
-	public boolean damage(int damage) {
+	public boolean damage(int damage, Vector2 dir) {
 		if (this.damage_cooldown > 0) return false;
 		this.health -= damage;
-		this.damage_cooldown = 20;
+		this.damage_cooldown = damage_cooldown_max;
 		this.damaged = true;
 		if (this.health <= 0) this.die();
 		this.damage_function();
+		this.knockback(dir);
 		
 		return true;
 	}
 	public void damage_function() {
 		
+	}
+	public void knockback(Vector2 dir) {
+		this.momentum.set(dir._mult(1.0 / this.mass));
+	}
+	
+	public void momentum_damp() {
+		double l = this.momentum.l();
+		if (l < 1e-3) return;
+		this.momentum.mult(Math.max(l - 1, 0) / l);
 	}
 	
 	public void die() {

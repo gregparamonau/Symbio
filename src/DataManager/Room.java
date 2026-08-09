@@ -433,8 +433,8 @@ public class Room extends Rectangle{
 	}
 	
 	public static void update() {
+		if (Rectangle.intersect(Game.player, bounds[room_num])) return;
 		for (int x = 0; x<bounds.length; x++) {
-			if (Rectangle.intersect(Game.player, bounds[x]) && x == room_num) return;
 			if (Rectangle.intersect(Game.player, bounds[x]) && x != room_num) {
 				//for (Rectangle temp: bounds) System.out.println(temp);
 				//System.out.println("CHANGE ROOM");

@@ -10,8 +10,11 @@ public class PlayerCombat {
 	Player player;
 	
 	//attack
-	public int slash_strength = 1;
-	public Vector2 slash_dir;
+	public int slash_strength = 5;
+	public Vector2 slash_dir = new Vector2();
+	public int slash_direction_buffer = 0, slash_count = 0, slash_cooldown, slash_buffer;
+	static int slash_direction_buffer_max = 2, slash_length = 5, slash_cooldown_max = 10, slash_buffer_max = 5;
+	public boolean slashing = false, slash_held = false;
 	
 	public Vector2 slash_bounds = new Vector2(35, 24);
 	public Vector2 offset_slash = new Vector2(10, 12);
@@ -20,9 +23,10 @@ public class PlayerCombat {
 	//health system
 	public Vector2 respawn_point = new Vector2(0, 0);
 	public boolean respawn_set = false;
-	public int health_full = 3;
+	public int health_full = 7;
 	public int health = health_full;
-	public int knockback = 6;
+	public int knockback = 5;
+	public int enemy_knockback_horizontal = 3, enemy_knockback_vertical = 10;
 		
 	public int invincibility_frames = 0;
 	public int invincibility_frames_max = 60;
@@ -33,19 +37,65 @@ public class PlayerCombat {
 	}
 
 	public void update() {
+		if (this.player.input.slash) this.slash_buffer = slash_buffer_max;
+		if ((this.player.input.slash || this.slash_buffer > 0) && this.slash_cooldown == 0 && this.slash_direction_buffer == 0 && !this.slashing && !this.slash_held) this.start_slash();
 		
 		//System.out.println("SLASH: " + this.player.slashing + " COUNT: " + this.slash_count);
 		
 		if (this.invincibility_frames > 0) this.invincibility_frames--;
+		if (this.slash_cooldown > 0) this.slash_cooldown--;
+		if (this.slash_buffer > 0) this.slash_buffer--;
 		
 		if (!this.respawn_set && this.player.object_intersect_id != -1 && this.player.collider.col_down && Game.current_room.objects[this.player.object_intersect_id].object_handle == -1) {
 			this.respawn_point.set(this.player.pos);
 			this.respawn_set = true;
 		}
+		if (this.slash_direction_buffer > 0 || this.slash_count > 0) this.slash();
+		this.slashing = this.slash_count > 0;
+		this.slash_held = this.player.input.slash && (this.slashing || this.slash_held);
 	}
 	
 	//ATTACK CODE
-
+	public void start_slash() {
+		this.slash_direction_buffer = slash_direction_buffer_max;
+		System.out.println("START_SLASH");
+		//X frame window to choose slash direction (maybe not necessary)
+		//decide direction
+		//loop through enemies & other things we can attack & attack them as appropriate
+		//give every thing a Y frame cooldown, where it cannnot be attacked again in that time
+		//
+	}
+	
+	public void slash() {
+		System.out.println("SLASHING");
+		if (this.slash_direction_buffer > 0) {
+			this.slash_dir.set(this.find_slash_dir());
+			this.slash_direction_buffer--;
+			if (this.slash_direction_buffer == 0) this.slash_count = slash_length;
+			System.out.println("SLASH BUFFER");
+			return;
+		}
+		
+		Rectangle hb = new Rectangle(this.player.pos.x + this.slash_dir.x, this.player.pos.y + this.slash_dir.y, (this.slash_dir.x != 0 ? 1 : 0) * this.slash_bounds.x + (this.slash_dir.x == 0 ? 1: 0) * this.slash_bounds.y, (this.slash_dir.y != 0 ? 1.25 : 0) * this.slash_bounds.x + (this.slash_dir.y == 0 ? 1: 0) * this.slash_bounds.y);
+		
+		for (int x = 0; x<Game.current_room.enemies.length; x++) {
+			if (Rectangle.intersect(hb, Game.current_room.enemies[x])) {
+				Game.current_room.enemies[x].damage(this.slash_strength, this.slash_dir.norm()._mult(this.slash_dir.x != 0 ? enemy_knockback_horizontal : enemy_knockback_vertical));
+				this.slash_effects();
+			}
+		}
+		System.out.println("SLASH");
+		
+		if (this.slash_count > 0) this.slash_count--;
+		if (this.slash_count == 0) this.slash_cooldown = slash_cooldown_max;
+		
+	}
+	
+	public void slash_effects() {
+		this.player.movement.knock_back(this.slash_dir._mult(-1).norm());
+		this.player.movement.dash_num = this.player.movement.dash_keep;
+	}
+	
 	
 	public Vector2 find_slash_dir() {
 		if (this.player.input.face_dir.y != 0 && !(this.player.input.face_dir.y < 0 && this.player.collider.col_down)) {

@@ -69,6 +69,11 @@ public class PlayerRender {
 			}
 		}
 		
+		if (this.player.combat.slashing) {
+			Rectangle hb = new Rectangle(this.player.pos.x + this.player.combat.slash_dir.x, this.player.pos.y + this.player.combat.slash_dir.y, (this.player.combat.slash_dir.x != 0 ? 1 : 0) * this.player.combat.slash_bounds.x + (this.player.combat.slash_dir.x == 0 ? 1: 0) * this.player.combat.slash_bounds.y, (this.player.combat.slash_dir.y != 0 ? 1.25 : 0) * this.player.combat.slash_bounds.x + (this.player.combat.slash_dir.y == 0 ? 1: 0) * this.player.combat.slash_bounds.y);
+			hb.draw(g, pane, xin, yin, location, false);
+		}
+		
 		//if (this.player.object_intersect_id != -1) this.player.pos.draw_node(g, pane, xin, yin, location, Color.green);
 		//else this.player.pos.draw_node(g, pane, xin, yin, location, Color.red);
 		
