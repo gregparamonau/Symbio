@@ -13,7 +13,7 @@ public class PlayerCombat {
 	public int slash_strength = 5;
 	public Vector2 slash_dir = new Vector2();
 	public int slash_direction_buffer = 0, slash_count = 0, slash_cooldown, slash_buffer;
-	static int slash_direction_buffer_max = 2, slash_length = 3, slash_cooldown_max = 10, slash_buffer_max = 5;
+	static int slash_direction_buffer_max = 2, slash_length = 10, slash_cooldown_max = 10, slash_buffer_max = 5;
 	public boolean slashing = false, slash_held = false, pogo = false;
 	
 	public double slash_h_knockback = 6, slash_v_knockback = 8;

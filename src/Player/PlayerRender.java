@@ -53,11 +53,10 @@ public class PlayerRender {
 			this.interrupt = true;
 		}
 		
-		if (this.interrupt && this.anim.interrupt()) {
-			
-			this.anim = new Animation(anim_name(), this.player.pos, true);
-			
-			this.interrupt = false;
+		if (this.interrupt && (this.anim.interrupt() || this.current_state.equals("slash"))) {
+		    this.anim = new Animation(anim_name(), this.player.pos, true);
+		    this.anim.start();
+		    this.interrupt = false;
 		}
 		//TODO: don't forget this!
 		this.anim.play(false, Vector2.zero, (this.player.input.last_dir == -1/* && !this.player.wall_slide*/) || (/*this.player.wall_slide && */this.player.collider.col_right), g, pane, xin, yin, location);
@@ -103,6 +102,7 @@ public class PlayerRender {
 	}
 	public void start_animations() {
 		this.anim = new Animation(this.anim_name(), this.player.pos, true);
+		this.anim.start();
 	}
 	
 	public void start_poss() {

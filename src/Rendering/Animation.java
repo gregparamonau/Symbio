@@ -38,7 +38,7 @@ public class Animation {
 			this.sprites = new BufferedImage[(create_flip ? 2 : 1)][this.length];
 			for (int x = 0; x<this.length; x++) {
 				this.sprites[0][x] = temp.getSubimage(x * temp.getWidth() / this.length + 1, 0, (temp.getWidth() - 1) / this.length, temp.getHeight());
-				if (create_flip) this.sprites[1][this.length - x - 1] = Utility.flip(this.sprites[0][x], false, true);
+				if (create_flip) this.sprites[1][x] = Utility.flip(this.sprites[0][x], false, true);
 			}
 			
 		
@@ -51,7 +51,7 @@ public class Animation {
 		//add_new_animation(this);
 	}
 	public void play(boolean play_pos, Vector2 loc, boolean flipv, Graphics g, JPanel pane, double xin, double yin, String location) {
-		if (this.counter == -1 || this.ended) ;//return;
+		if (this.counter == -1 || this.ended) return;
 		new Rectangle(this.pos.x * (play_pos ? 0 : 1) + loc.x * (play_pos ? 1 : 0), this.pos.y * (play_pos ? 0 : 1) + loc.y * (play_pos ? 1 : 0), 0, 0).draw_with_sprite(g, pane, xin, yin, this.sprites[(flipv? 1 : 0)][this.frame], location);
 		
 		if (!this.repeating && (this.counter + 1 >= this.length * this.frequency || this.frame >= this.length)) {
@@ -68,8 +68,9 @@ public class Animation {
 		//kill_animation(this);
 	}
 	public boolean interrupt() {
-		if (this.counter % this.length == 0) return true;
-		return false;
+	    if (this.ended) return true;
+	    if (this.counter % this.length == 0) return true;
+	    return false;
 	}
 	
 	
