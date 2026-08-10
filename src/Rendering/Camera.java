@@ -58,7 +58,7 @@ public class Camera {
 		
 		for (int x = 0; x<Game.current_room.objects.length; x++) if (Game.current_room.objects[x] instanceof SBTerrain) Game.current_room.objects[x].draw_object(g, Start.pane, this.pos.x, this.pos.y, "game");
 		
-		Game.player.render.draw_player(g, Start.pane, this.pos.x, this.pos.y, "game");
+		//Game.player.render.draw_player(g, Start.pane, this.pos.x, this.pos.y, "game");
 		
 		for (int x = 0; x<Game.current_room.objects.length; x++) {
 			if (Game.current_room.objects[x] instanceof SBTerrain) continue;
@@ -82,6 +82,8 @@ public class Camera {
 			draw_debug_menu(g, delta_time, Game.player);
 
 		}
+		Game.player.render.draw_player(g, Start.pane, this.pos.x, this.pos.y, "game");
+
 		
 		this.draw_animations(g);
 		

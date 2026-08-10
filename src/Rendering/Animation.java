@@ -30,8 +30,7 @@ public class Animation {
 			BufferedImage temp = ImageIO.read(getClass().getResource(file));
 			
 			//first column of sprite sheet contains info about frequency, and length of an animation.
-			this.length = temp.getRGB(0, 0) & 16777215;
-			System.out.println(temp.getRGB(0, 0) + " " + file);
+			this.length = temp.getRGB(0, 0) & 16777215; // 00000000_11111111_11111111_11111111
 			this.frequency = temp.getRGB(0, 1) & 16777215;
 			this.repeating = temp.getRGB(0, 2) == Color.white.getRGB();
 			

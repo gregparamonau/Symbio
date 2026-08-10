@@ -39,7 +39,7 @@ public class PlayerCombat {
 	}
 
 	public void update() {
-		if (this.player.input.slash) this.slash_buffer = slash_buffer_max;
+		if (this.player.input.slash && !this.slash_held) this.slash_buffer = slash_buffer_max;
 		if ((this.player.input.slash || this.slash_buffer > 0) && this.slash_cooldown == 0 && this.slash_direction_buffer == 0 && !this.slashing && !this.slash_held) this.start_slash();
 		
 		//System.out.println("SLASH: " + this.player.slashing + " COUNT: " + this.slash_count);

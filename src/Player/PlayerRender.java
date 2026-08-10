@@ -22,7 +22,7 @@ public class PlayerRender {
 	
 	public static final String idle = "/player_textures/player_idle.png";
 	public static final String run = "/player_textures/player_run.png";
-	public static final String slash_side = "/player_textures/slash_side.png";
+	public static final String slash_side = "/player_textures/slash_side.png", slash_down = "/player_textures/slash_down.png";
 	
 	//antenna logic
 	public static final int antenna_length = 15;
@@ -71,7 +71,7 @@ public class PlayerRender {
 		
 		if (this.player.combat.slashing) {
 			Rectangle hb = new Rectangle(this.player.pos.x + this.player.combat.slash_dir.x, this.player.pos.y + this.player.combat.slash_dir.y, (this.player.combat.slash_dir.x != 0 ? 1 : 0) * this.player.combat.slash_bounds.x + (this.player.combat.slash_dir.x == 0 ? 1: 0) * this.player.combat.slash_bounds.y, (this.player.combat.slash_dir.y != 0 ? 1 : 0) * this.player.combat.slash_bounds.x + (this.player.combat.slash_dir.y == 0 ? 1: 0) * this.player.combat.slash_bounds.y);
-			hb.draw(g, pane, xin, yin, location, false);
+			//hb.draw(g, pane, xin, yin, location, false);
 		}
 		
 		//if (this.player.object_intersect_id != -1) this.player.pos.draw_node(g, pane, xin, yin, location, Color.green);
@@ -82,6 +82,7 @@ public class PlayerRender {
 	}
 	public String anim_name() {
 		if (current_state.equals("slash")) return slash_side;
+		if (current_state.equals("slash_down")) return slash_down;
 		if (current_state.equals("run")) {
 			return run;
 		}
@@ -93,7 +94,10 @@ public class PlayerRender {
 	}
 	public String current_state() {
 		//if (this.player.dashing) return "dash";
-		if (this.player.combat.slashing) return "slash";
+		if (this.player.combat.slashing) {
+			if (this.player.combat.slash_dir.y < 0) return "slash_down";
+			return "slash";
+		}
 		if (this.player.collider.col_down && this.player.vel.x == 0) return "idle";
 		if (this.player.collider.col_down && this.player.vel.x != 0) return "run";
 		//if (this.player.wall_slide) return "wall";
@@ -145,9 +149,8 @@ public class PlayerRender {
 		for (int x = antenna_length - 1; x > 1; x--) {
 			this.theta_s[x] = this.theta_s[x - 1];
 		}
-		
+
 		this.theta_s[1] = Math.random() * max_theta_s * this.player.input.last_dir;//Utility.clamp(this.theta_s[2] + (Math.random() > 0.25 ? (Math.random() > 0.75 ? 1 : 0 ) : -1) * theta_s_vel * this.player.input.last_dir, 0, max_theta_s * this.player.input.last_dir);
-		
 		
 		double sum = 0;
 		
