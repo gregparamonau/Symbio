@@ -58,7 +58,7 @@ public class Camera {
 		
 		for (int x = 0; x<Game.current_room.objects.length; x++) if (Game.current_room.objects[x] instanceof SBTerrain) Game.current_room.objects[x].draw_object(g, Start.pane, this.pos.x, this.pos.y, "game");
 		
-		//Game.player.render.draw_player(g, Start.pane, this.pos.x, this.pos.y, "game");
+		Game.player.render.draw_player(g, Start.pane, this.pos.x, this.pos.y, "game");
 		
 		for (int x = 0; x<Game.current_room.objects.length; x++) {
 			if (Game.current_room.objects[x] instanceof SBTerrain) continue;
@@ -82,8 +82,6 @@ public class Camera {
 			draw_debug_menu(g, delta_time, Game.player);
 
 		}
-		Game.player.render.draw_player(g, Start.pane, this.pos.x, this.pos.y, "game");
-
 		
 		this.draw_animations(g);
 		
@@ -111,13 +109,13 @@ public class Camera {
 		}
 	}
 	public void draw_animations(Graphics g) {
-		for (int x = 0; x<Animation.anims.length; x++) {
-			Animation.anims[x].play(false, Vector2.zero, false, g, Start.pane, this.pos.x, this.pos.y, "game");
+		for (Animation anim: Animation.anims) {
+			anim.play(false, Vector2.zero, false, g, Start.pane, this.pos.x, this.pos.y, "game");
 		}
 	}
 	public void draw_HUD(Graphics g) {
 		for (int x = 0; x<Game.player.combat.health; x++) {
-			//new Rectangle(HUD_offset.x + this.pos.x + (x * 2 + 1) * tile_size, HUD_offset.y + this.pos.y - tile_size, 0, 0).draw_with_sprite(g, Start.pane, this.pos.x, this.pos.y, this.health_sprite.sprites[0][0], "game");
+			new Rectangle(HUD_offset.x + this.pos.x + (x * 2 + 1) * tile_size, HUD_offset.y + this.pos.y - tile_size, 0, 0).draw_with_sprite(g, Start.pane, this.pos.x, this.pos.y, Animation.global_sprites[this.health_sprite.index_start][0], "game");
 		}
 	}
 	public void draw_grid(Graphics g) {
@@ -202,7 +200,7 @@ public class Camera {
 			this.parallax[0] = Utility.transformed_instance(ImageIO.read(getClass().getResource("/extra_textures/parallax_0.png")), 1, Color.black, 1);
 			this.parallax[1] = Utility.transformed_instance(ImageIO.read(getClass().getResource("/extra_textures/parallax_1.png")), 1, Color.black, 1);
 			this.parallax[2] = Utility.transformed_instance(ImageIO.read(getClass().getResource("/extra_textures/parallax_2.png")), 1, Color.black, 1);
-			//this.health_sprite = new Animation(health_sprite_name, this.pos, 1, 60, false, true);
+			this.health_sprite = new Animation(health_sprite_name, this.pos, true, true);
 			
 			//System.out.println("BW: " + this.back.getWidth() + " BH: " + this.back.getHeight());
 			//System.exit(0);

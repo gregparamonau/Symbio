@@ -5,6 +5,10 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ArrayList;
+
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
@@ -14,17 +18,32 @@ import Logic.Utilities.Utility;
 import Main.Game;
 
 public class Animation {
-	public static Animation[] anims = new Animation[0];
-	public BufferedImage[][] sprites;
+	public static ArrayList<Animation> anims = new ArrayList<>();
+	
+	static BufferedImage[][] global_sprites = new BufferedImage[0][2];
+	static Map<String, Integer> anim_dict = new HashMap<>();
+	
+	//index 0 for normal anim, index 1 for flipped anim
+	
+	public int index_start;
 	public int counter = -1, frame = 0;
 	Vector2 pos;
-	public boolean repeating = false, ended = false, flip = false;
+	public boolean repeating = false, ended = false, flip = false, persistent = false;
 	int frequency, length;
 	public int id;
-	//all animations are by default 10 frames long (and only that option) (so 10 frames per second)
-	//fliph across horizontal
-	//flipv across vertical
-	public Animation(String file, Vector2 pos, boolean create_flip) {
+	
+	//TODO, instead of having a bajillion of the same animation, 
+	//load the animation sprites into one array, and let every 
+	//Animation object reference this global sprite array through indices.
+	
+	//this reduces ram usage
+	//also allows for easier animation control
+	//clear this array every time we go to a new room.
+	//particle effects can thus also have animations attached
+	//to them without needing a lot of memory
+	
+	
+	public Animation(String file, Vector2 pos, boolean create_flip, boolean persistent) {
 		this.pos = pos;
 		try {
 			BufferedImage temp = ImageIO.read(getClass().getResource(file));
@@ -34,11 +53,26 @@ public class Animation {
 			this.frequency = temp.getRGB(0, 1) & 16777215;
 			this.repeating = temp.getRGB(0, 2) == Color.white.getRGB();
 			
-			this.sprites = new BufferedImage[(create_flip ? 2 : 1)][this.length];
+			System.out.println("L: " + this.length + " F: " + this.frequency + " R: " + this.repeating);
+			
+			BufferedImage[][] barr = new BufferedImage[this.length][2];
 			for (int x = 0; x<this.length; x++) {
-				this.sprites[0][x] = temp.getSubimage(x * temp.getWidth() / this.length + 1, 0, (temp.getWidth() - 1) / this.length, temp.getHeight());
-				if (create_flip) this.sprites[1][x] = Utility.flip(this.sprites[0][x], false, true);
+				barr[x][0] = temp.getSubimage(x * temp.getWidth() / this.length + 1, 0, (temp.getWidth() - 1) / this.length, temp.getHeight());
+				if (create_flip) barr[x][1] = Utility.flip(barr[x][0], false, true);
 			}
+			
+			this.index_start = global_sprites.length;
+			this.add_animation(barr);
+			
+			if (!anim_dict.containsKey(file)) {
+				anim_dict.put(file, this.index_start);
+			}
+			
+			this.index_start = anim_dict.get(file);
+			
+			this.persistent = persistent;
+			
+			anims.add(this);
 			
 		
 		}catch(IOException e) {
@@ -51,7 +85,7 @@ public class Animation {
 	}
 	public void play(boolean play_pos, Vector2 loc, boolean flipv, Graphics g, JPanel pane, double xin, double yin, String location) {
 		if (this.counter == -1 || this.ended) return;
-		new Rectangle(this.pos.x * (play_pos ? 0 : 1) + loc.x * (play_pos ? 1 : 0), this.pos.y * (play_pos ? 0 : 1) + loc.y * (play_pos ? 1 : 0), 0, 0).draw_with_sprite(g, pane, xin, yin, this.sprites[(flipv? 1 : 0)][this.frame], location);
+		new Rectangle(this.pos.x * (play_pos ? 0 : 1) + loc.x * (play_pos ? 1 : 0), this.pos.y * (play_pos ? 0 : 1) + loc.y * (play_pos ? 1 : 0), 0, 0).draw_with_sprite(g, pane, xin, yin, global_sprites[this.frame + this.index_start][(flipv? 1 : 0)], location);
 		
 		if (!this.repeating && (this.counter + 1 >= this.length * this.frequency || this.frame >= this.length)) {
 			this.ended = true;
@@ -70,6 +104,37 @@ public class Animation {
 	    if (this.ended) return true;
 	    if (this.counter % this.length == 0) return true;
 	    return false;
+	}
+	
+	public void add_animation(BufferedImage[][] in) {
+		BufferedImage[][] out = new BufferedImage[global_sprites.length + in.length][2];
+		
+		System.arraycopy(global_sprites, 0, out, 0, global_sprites.length);
+		System.arraycopy(in, 0, out, global_sprites.length, in.length);
+		
+		global_sprites = out;
+	}
+	
+	public void clear_animation() {
+		BufferedImage[][] out = new BufferedImage[global_sprites.length - this.length][2];
+		
+		System.arraycopy(global_sprites, 0, out, 0, this.index_start);
+		
+		int rem = global_sprites.length - this.index_start - this.length;
+		
+		if (rem > 0) System.arraycopy(global_sprites, this.index_start + this.length, out, this.index_start, rem);
+		
+		global_sprites = out;
+	}
+	
+	public static void clear_anims() {
+		anims.removeIf(anim -> {
+			if (!anim.persistent) {
+				anim.clear_animation();
+				return true;
+			}
+			return false;
+		});
 	}
 	
 	

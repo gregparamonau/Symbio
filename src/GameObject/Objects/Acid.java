@@ -123,7 +123,7 @@ public class Acid extends GameObject{
 		
 		for (int x = 0; x<this.bubbles.length; x++) {
 			this.bubbles[x] = new Vector2(- this.width / 2 + (x % (this.width / Camera.tile_size) + 0.5) * Camera.tile_size, this.height * (Math.random()  - 0.5));
-			this.bubble_anims[x] = new Animation(bubble, this.bubbles[x], false);
+			this.bubble_anims[x] = new Animation(bubble, this.bubbles[x], false, false);
 			this.bubble_anims[x].start();
 		}
 	}
@@ -133,7 +133,7 @@ public class Acid extends GameObject{
 			
 			if (this.bubble_anims[x].ended) {
 				this.respawn_bubble(x);
-				this.bubble_anims[x] = new Animation(bubble, this.bubbles[x], false);
+				this.bubble_anims[x] = new Animation(bubble, this.bubbles[x], false, false);
 				this.bubble_anims[x].start();
 				continue;
 			}

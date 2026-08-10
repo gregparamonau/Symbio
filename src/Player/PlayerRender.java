@@ -22,7 +22,7 @@ public class PlayerRender {
 	
 	public static final String idle = "/player_textures/player_idle.png";
 	public static final String run = "/player_textures/player_run.png";
-	public static final String slash_side = "/player_textures/slash_side.png", slash_down = "/player_textures/slash_down.png";
+	public static final String slash_side = "/player_textures/slash_side.png", slash_down = "/player_textures/slash_down.png", slash_up = "/player_textures/slash_up.png";
 	
 	//antenna logic
 	public static final int antenna_length = 15;
@@ -53,15 +53,14 @@ public class PlayerRender {
 			this.interrupt = true;
 		}
 		
-		if (this.interrupt && (this.anim.interrupt() || this.current_state.equals("slash"))) {
-		    this.anim = new Animation(anim_name(), this.player.pos, true);
+		if (this.interrupt && (this.anim.interrupt() || this.current_state.equals("slash") || this.current_state.equals("slash_down") || this.current_state.equals("slash_up"))) {
+		    this.anim = new Animation(anim_name(), this.player.pos, true, true);
 		    this.anim.start();
 		    this.interrupt = false;
 		}
 		//TODO: don't forget this!
-		this.anim.play(false, Vector2.zero, (this.player.input.last_dir == -1/* && !this.player.wall_slide*/) || (/*this.player.wall_slide && */this.player.collider.col_right), g, pane, xin, yin, location);
-		
 		this.draw_antenna(g, pane, xin, yin, location, null);
+		this.anim.play(false, Vector2.zero, (this.player.input.last_dir == -1/* && !this.player.wall_slide*/) || (/*this.player.wall_slide && */this.player.collider.col_right), g, pane, xin, yin, location);
 		
 		if (Game.debug_mode) {
 			for (int x = 0; x<poss.length; x++) {
@@ -83,6 +82,7 @@ public class PlayerRender {
 	public String anim_name() {
 		if (current_state.equals("slash")) return slash_side;
 		if (current_state.equals("slash_down")) return slash_down;
+		if (current_state.equals("slash_up")) return slash_up;
 		if (current_state.equals("run")) {
 			return run;
 		}
@@ -96,6 +96,7 @@ public class PlayerRender {
 		//if (this.player.dashing) return "dash";
 		if (this.player.combat.slashing) {
 			if (this.player.combat.slash_dir.y < 0) return "slash_down";
+			if (this.player.combat.slash_dir.y > 0) return "slash_up";
 			return "slash";
 		}
 		if (this.player.collider.col_down && this.player.vel.x == 0) return "idle";
@@ -105,7 +106,7 @@ public class PlayerRender {
 		return "idle";
 	}
 	public void start_animations() {
-		this.anim = new Animation(this.anim_name(), this.player.pos, true);
+		this.anim = new Animation(this.anim_name(), this.player.pos, true, true);
 		this.anim.start();
 	}
 	

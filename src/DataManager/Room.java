@@ -96,7 +96,7 @@ public class Room extends Rectangle{
 	
 	public void generate_terrain_sprites(String in) {
 		
-		int bump_depth = 0;
+		int bump_depth = 15;
 		int shear_offset = 0;//if you want sheared art, do this --> -2 looks good!
 		
 		//BufferedImage terr = new BufferedImage((int)this.max_bounds.width + 2 * bump_depth, (int)this.max_bounds.height + 2 * bump_depth, BufferedImage.TYPE_INT_ARGB);
@@ -440,7 +440,7 @@ public class Room extends Rectangle{
 				//System.out.println("CHANGE ROOM");
 				room_num = x;
 				respawn_point_set = false;
-				Animation.anims = new Animation[0];
+				Animation.clear_anims();
 				Game.current_room = DataManager.load_room(room_num, Camera.tile_size, false);
 				Game.cam.recalculate_bounds();
 				return;

@@ -12,11 +12,12 @@ public class PlayerCombat {
 	//attack
 	public int slash_strength = 5;
 	public Vector2 slash_dir = new Vector2();
-	public int slash_direction_buffer = 0, slash_count = 0, slash_cooldown, slash_buffer;
-	static int slash_direction_buffer_max = 2, slash_length = 10, slash_cooldown_max = 10, slash_buffer_max = 5;
-	public boolean slashing = false, slash_held = false, pogo = false;
+	public int slash_direction_buffer = 0, slash_count = 0, slash_cooldown = 0, slash_buffer = 0;
+	static int slash_direction_buffer_max = 2, slash_length = 10, slash_cooldown_max = 5, slash_buffer_max = 5;
+	public boolean slashing = false, slash_held = false, pogo = false, slash_effects = false, hit = false;
 	
-	public double slash_h_knockback = 6, slash_v_knockback = 8;
+	public double slash_h_knockback = 6, slash_v_knockback = 3.5;
+	public static double pogo_gravity = 0.2;
 	
 	public Vector2 slash_bounds = new Vector2(36, 24);
 	public Vector2 offset_slash = new Vector2(10, 12);
@@ -46,15 +47,18 @@ public class PlayerCombat {
 		
 		if (this.invincibility_frames > 0) this.invincibility_frames--;
 		if (this.slash_cooldown > 0) this.slash_cooldown--;
+		if (this.slash_cooldown == 0 && !this.slashing) this.hit = false;
 		if (this.slash_buffer > 0) this.slash_buffer--;
 		
 		if (!this.respawn_set && this.player.object_intersect_id != -1 && this.player.collider.col_down && Game.current_room.objects[this.player.object_intersect_id].object_handle == -1) {
 			this.respawn_point.set(this.player.pos);
 			this.respawn_set = true;
 		}
+		
+		if (this.slash_effects && this.slash_count == 0) this.slash_effects();
 		if (this.slash_direction_buffer > 0 || this.slash_count > 0) this.slash();
 		this.slashing = this.slash_count > 0;
-		this.pogo = this.slash_cooldown > 0 && this.slash_dir.y < 0;
+		this.pogo = (this.slash_cooldown > 0 || this.slashing) && this.slash_dir.y < 0;
 		this.slash_held = this.player.input.slash && (this.slashing || this.slash_held);
 	}
 	
@@ -95,9 +99,16 @@ public class PlayerCombat {
 		
 	}
 	
+	public void prep_slash_effects() {
+		this.player.vel.set(Vector2.zero);
+		this.slash_effects = true;
+	}
+	
 	public void slash_effects() {
+		this.hit = true;
 		this.player.movement.knockback(this.slash_dir._mult(-1).norm());
 		this.player.movement.dash_num = this.player.movement.dash_keep;
+		this.slash_effects = false;
 	}
 	
 	
@@ -127,6 +138,8 @@ public class PlayerCombat {
 		this.player.momentum = Vector2.scale_to_length(Vector2.sub(this.player.pos, source.pos), this.player.momentum.l());
 		
 		this.invincibility_frames = this.invincibility_frames_max;
+		
+		Game.hit_stop = 5;
 		
 		if (this.health <= 0) this.death_respawn();
 	}
