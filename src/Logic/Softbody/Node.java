@@ -8,7 +8,8 @@ import javax.swing.JPanel;
 import Logic.Vector2;
 
 public class Node {
-	public Vector2 pos;
+	String type; //node, hook, fixed
+	public Vector2 pos = new Vector2();
 	Vector2 last_pos;
 	public Vector2 vel;
 	public Vector2 force;
@@ -18,8 +19,13 @@ public class Node {
 			//position
 		//pos, vel, force
 	
-	public Node(double x, double y, double mass) {
-		this.pos = new Vector2(x, y);
+	public Node(Vector2 in, double mass, String type) {
+		//node & fixed -> .set
+		//hook -> =
+		
+		this.type = type;
+		if (this.type.equals("hook")) this.pos = in;
+		else this.pos.set(in);
 		this.last_pos = new Vector2(this.pos);
 		this.vel = new Vector2();
 		this.force = new Vector2();
@@ -46,7 +52,7 @@ public class Node {
 		this.vel.add(this.force._mult(1.0 / this.mass)._mult(dt));
 		
 		this.last_pos = new Vector2(this.pos);
-		this.pos.add(this.vel._mult(v_drag));
+		if (this.type.equals("node")) this.pos.add(this.vel._mult(v_drag));
 		
 		//this.force.set(new Vector2(0, 0));
 		

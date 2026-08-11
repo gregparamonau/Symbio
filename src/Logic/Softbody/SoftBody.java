@@ -2,6 +2,8 @@ package Logic.Softbody;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 import javax.swing.JPanel;
 
@@ -54,6 +56,7 @@ public class SoftBody {
 	//'rest_pos' is the rotated and moved mesh that the shape is actually pulled towards
 	Vector2[] base_rest_pos, rest_pos;
 	public Node[] nodes;
+	int external_nodes;
 	
 	Spring[] springs;
 	//simulation substeps
@@ -65,59 +68,64 @@ public class SoftBody {
 	
 	//constructors
 		//circle
-	public SoftBody(Vector2[] in) {
-		this.pos = new Vector2();
-		
-		this.nodes = new Node[in.length];
-		this.base_rest_pos = new Vector2[in.length];
-		this.rest_pos = new Vector2[in.length];
-		
-		for (int x = 0; x<in.length; x++) this.pos.add(in[x]._mult(1.0 / in.length));
-		for (int x = 0; x<in.length; x++) {
-			this.nodes[x] = new Node(in[x].x, in[x].y, 100); //10000 temporary to prevent the softbody from displacing improperly
-			this.rest_pos[x] = new Vector2(this.nodes[x].pos);
-			this.base_rest_pos[x] = Vector2.sub(this.rest_pos[x], this.pos);
-		}
-		
-		this.pol = new Polygon(this);
-		
-		this.springs = new Spring[4 * this.nodes.length];
-		
-		for (int x = 0; x<this.nodes.length; x++) {
-			this.springs[x] = new Spring(this.nodes[x], this.nodes[(x + 1) % this.nodes.length], in.length);
-			this.springs[this.nodes.length + x] = new Spring(this.nodes[x], this.nodes[(x + num / 4) % this.nodes.length], in.length);
-			this.springs[2 * this.nodes.length + x] = new Spring(this.nodes[x], this.pos, in.length);
-			//this.springs[2 * this.nodes.length + x] = new Spring(this.nodes[x], this.nodes[(x + num / 2 - 1) % this.nodes.length], k / num);
-			this.springs[3 * this.nodes.length + x] = new Spring(this.nodes[x], this.rest_pos[x], in.length);
+	public SoftBody(String filename) {
+		try {
+			BufferedReader read = new BufferedReader(new FileReader(filename));
+			
+			String[] arr = read.readLine().split(" ");
+			int N = Integer.parseInt(arr[0]);
+			
+			//always add the rest_pos springs as well.
+			
+			//reading in nodes
+			this.nodes = new Node[N];
+			
+			for (int x = 0; x<N; x++) {
+				arr = read.readLine().split(" ");
+				
+				
+			}
+			
+			
+		}catch (Exception e) {
+			
 		}
 	}
 	
 	public SoftBody(Vector2 pos, double r, int id) {
 		
-		this.nodes = new Node[num];
+		this.external_nodes = num;
+		this.nodes = new Node[2 * num + 1];
 		this.base_rest_pos = new Vector2[num];
 		this.rest_pos = new Vector2[num];
 		this.pos = pos;
 		
 		for (int x = 0; x<num; x++) {
-			this.nodes[x] = new Node(this.pos.x + r * Math.cos(x * 2 * Math.PI / num), this.pos.y + r * Math.sin(x * 2 * Math.PI / num), 0.75);
+			this.nodes[x] = new Node(new Vector2(this.pos.x + r * Math.cos(x * 2 * Math.PI / num), this.pos.y + r * Math.sin(x * 2 * Math.PI / num)), 0.75, "node");
 			System.out.println(this.nodes[x]);
 			this.rest_pos[x] = new Vector2(this.nodes[x].pos);
 			this.base_rest_pos[x] = Vector2.sub(this.rest_pos[x], this.pos);
 		}
 		
+		for (int x = 0; x < num; x++) {
+			this.nodes[num + x] = new Node(this.rest_pos[x], 0.75, "hook");
+		}
+		
+		this.nodes[2 * num] = new Node(this.pos, 0.75, "hook");
+		
+		
 		this.pol = new Polygon(this);
 		
 		//how to arrange springs?
 		
-		this.springs = new Spring[4 * this.nodes.length];
+		this.springs = new Spring[4 * this.external_nodes];
 		
-		for (int x = 0; x<this.nodes.length; x++) {
+		for (int x = 0; x < num; x++) {
 			this.springs[x] = new Spring(this.nodes[x], this.nodes[(x + 1) % this.nodes.length], k / num);
-			this.springs[this.nodes.length + x] = new Spring(this.nodes[x], this.nodes[(x + num / 4) % this.nodes.length], k / num);
-			this.springs[2 * this.nodes.length + x] = new Spring(this.nodes[x], this.pos, k / num);
+			this.springs[this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[(x + num / 4) % this.nodes.length], k / num);
+			this.springs[2 * this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[2 * num], k / num);
 			//this.springs[2 * this.nodes.length + x] = new Spring(this.nodes[x], this.nodes[(x + num / 2 - 1) % this.nodes.length], k / num);
-			this.springs[3 * this.nodes.length + x] = new Spring(this.nodes[x], this.rest_pos[x], k / num);
+			this.springs[3 * this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[x + num], k / num);
 		}
 		
 		this.id = id;
@@ -183,8 +191,10 @@ public class SoftBody {
 	}
 	//apply_spring_forces
 	public void apply_spring_forces() {
-		for (int x = 0; x<this.springs.length; x++)
+		for (int x = 0; x<this.springs.length; x++) {
+			System.out.println("SPRING: " + x + "/" + this.springs.length);
 			this.springs[x].update();
+		}
 	}
 	public void integrate_nodes(double dt) {
 		for (int x = 0; x<this.nodes.length; x++) 
@@ -342,7 +352,7 @@ public class SoftBody {
 		
 		double angle = 0.0;
 		
-		for (int x = 0; x<this.nodes.length; x++) {
+		for (int x = 0; x<this.external_nodes; x++) {
 			Vector2 vec = Vector2.sub(this.nodes[x].pos, this.pos);
 			double ang = Vector2.angle(this.base_rest_pos[x], vec);
 			
@@ -590,10 +600,10 @@ public class SoftBody {
 		
 		int[][] temp = this.to_polygon(pane, xpos, ypos, location);
 		g.setColor(this.fill);		
-		g.fillPolygon(temp[0], temp[1], this.nodes.length);
+		g.fillPolygon(temp[0], temp[1], this.external_nodes);
 		
 		g.setColor(Color.blue);		
-		g.drawPolygon(temp[0], temp[1], this.nodes.length);
+		g.drawPolygon(temp[0], temp[1], this.external_nodes);
 		
 		temp = this.to_polygon(this.rest_pos, pane, xpos, ypos, location);
 		
@@ -637,7 +647,7 @@ public class SoftBody {
 	}
 	
 	public int[][] to_polygon(JPanel pane, double xpos, double ypos, String location) {
-		int[][] out = new int[2][this.nodes.length];
+		int[][] out = new int[2][this.external_nodes];
 		
 		for (int x = 0; x<out[0].length; x++) {
 			Vector2 temp = Vector2.converted_pos(this.nodes[x].pos, pane, xpos, ypos, location);
@@ -650,7 +660,7 @@ public class SoftBody {
 	}
 	
 	public int[][] to_polygon(Vector2[] in, JPanel pane, double xpos, double ypos, String location) {
-		int[][] out = new int[2][this.nodes.length];
+		int[][] out = new int[2][this.external_nodes];
 		
 		for (int x = 0; x<out[0].length; x++) {
 			Vector2 temp = Vector2.converted_pos(in[x], pane, xpos, ypos, location);

@@ -10,9 +10,7 @@ import Logic.Collision.Line;
 
 public class Spring {
 	Node a, b;
-	Vector2 hook;
 	double rest_length, k;
-	boolean hooked;
 	double max_length = 1.2;
 	//constructors
 		//Node Node
@@ -26,68 +24,64 @@ public class Spring {
 		
 		this.rest_length = this.length();
 		
-		this.hooked = false;
-		
-	}
-	
-	public Spring(Node a, Vector2 b, double k) {
-		this.a = a;
-		this.hook = b;
-		
-		this.k = k;
-		
-		this.hooked = true;
-		
-		this.rest_length = this.length();
 	}
 	
 	
 	//length()
 	public double length() {
-		if (this.hooked) return Vector2.dist(this.a.pos, hook);
-		
 		return Vector2.dist(this.a.pos, this.b.pos);
 	}
 	
 	//update (apply forces to nodes)
 	
 	public void update() {
-		if (this.hooked) {
-			Vector2 a = Vector2.sub(this.hook, this.a.pos);
-			if (a.l() < 1E-3) return;
-			Vector2 dir = a.norm();
+		if (this.a.type.equals("node") && this.b.type.equals("node")) {
+			double ds = this.length() - this.rest_length, kd = 1.75;//kd = damping factor
+			Vector2 dir = Vector2.sub(this.b.pos, this.a.pos).norm();
+			//spring force
+			Vector2 Fs = dir._mult(ds * k);
+			//drag force
+			//TBD
+			Vector2 Fd = dir._mult(Vector2.dot(dir, Vector2.sub(this.b.vel, this.a.vel)) * kd);
 			
-			double kd = 1.75;
+			Vector2 F = Vector2.add(Fs, Fd);
+			//Vector2 Fd = ;//Vector2.add(this.a.vel.mult(-), Fs)
 			
-			this.a.force.add(dir._mult((a.l() - this.rest_length) * this.k - Vector2.dot(dir, this.a.vel) * kd));
+			this.a.force.add(F);
+			this.b.force.add(F._mult(-1));
+			
+			this.shorten(this.length() - this.rest_length * max_length);
 			return;
-			//return;
 		}
 		
-		double ds = this.length() - this.rest_length, kd = 1.75;//kd = damping factor
-		Vector2 dir = Vector2.sub(this.b.pos, this.a.pos).norm();
-		//spring force
-		Vector2 Fs = dir._mult(ds * k);
-		//drag force
-		//TBD
-		Vector2 Fd = dir._mult(Vector2.dot(dir, Vector2.sub(this.b.vel, this.a.vel)) * kd);
+		Vector2 a = Vector2.sub(this.b.pos, this.a.pos);
+		if (a.l() < 1e-3) return;
 		
-		Vector2 F = Vector2.add(Fs, Fd);
-		//Vector2 Fd = ;//Vector2.add(this.a.vel.mult(-), Fs)
+		Vector2 dir = a.norm();
+		double kd = 1.75;
 		
-		this.a.force.add(F);
-		this.b.force.add(F._mult(-1));
+		if (!this.b.type.equals("node"))
+			this.a.force.add(dir._mult((a.l() - this.rest_length) * this.k - Vector2.dot(dir, this.a.vel) * kd));
 		
-		this.shorten(this.length() - this.rest_length * max_length);
+		if (!this.a.type.equals("node")) {
+			dir.mult(-1);
+			this.b.force.add(dir._mult((a.l() - this.rest_length) * this.k - Vector2.dot(dir, this.b.vel) * kd));
+		}
 	}
 	
 	//total distance
 	public void shorten(double distance) {
 		if (distance < 0) return;
 		
-		if (this.hooked) {
-			Vector2 temp = Vector2.sub(this.hook, this.a.pos).norm();
+		if (!this.b.type.equals("node")) {
+			Vector2 temp = Vector2.sub(this.b.pos, this.a.pos).norm();
 			this.a.pos.add(Vector2.mult(temp, distance));
+			return;
+		}
+		
+		if (!this.a.type.equals("node")) {
+			Vector2 temp = Vector2.sub(this.a.pos, this.b.pos).norm();
+			this.b.pos.add(Vector2.mult(temp, distance));
 			return;
 		}
 		
@@ -100,13 +94,7 @@ public class Spring {
 		
 		
 		g.setColor(Color.white);
-		Line out;
-		
-		if (this.hooked) {
-			out = new Line(this.a.pos, this.hook);
-		}
-		
-		else out = new Line(this.a.pos, this.b.pos);
+		Line out = new Line(this.a.pos, this.b.pos);
 		
 		out.draw_line(g, Color.white, pane, xpos, ypos, location, draw_nodes);
 
