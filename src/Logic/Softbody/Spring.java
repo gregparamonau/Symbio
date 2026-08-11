@@ -93,12 +93,16 @@ public class Spring {
 	public void draw(Graphics g, JPanel pane, double xpos, double ypos, String location, boolean draw_nodes) {
 		
 		
-		g.setColor(Color.white);
+		g.setColor(!this.a.type.equals("node") || !this.b.type.equals("node") ? Color.green : Color.white);
 		Line out = new Line(this.a.pos, this.b.pos);
 		
 		out.draw_line(g, Color.white, pane, xpos, ypos, location, draw_nodes);
 
 
+	}
+	
+	public String toString() {
+		return "A: " + this.a + " B: " + this.b + " K: " + this.k;
 	}
 	//damping method?
 		// Fd = (B - A)/|B - A| * (V_B - V_A) k_d

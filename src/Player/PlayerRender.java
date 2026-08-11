@@ -60,7 +60,7 @@ public class PlayerRender {
 		}
 		//TODO: don't forget this!
 		this.draw_antenna(g, pane, xin, yin, location, null);
-		this.anim.play(false, Vector2.zero, (this.player.input.last_dir == -1/* && !this.player.wall_slide*/) || (/*this.player.wall_slide && */this.player.collider.col_right), g, pane, xin, yin, location);
+		this.anim.play(false, Vector2.zero, (this.player.input.last_dir == -1/* && !this.player.wall_slide*/) || (/*this.player.movement.wall_slide && */this.player.collider.col_right), g, pane, xin, yin, location);
 		
 		if (Game.debug_mode) {
 			for (int x = 0; x<poss.length; x++) {

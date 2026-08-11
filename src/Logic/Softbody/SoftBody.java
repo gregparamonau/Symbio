@@ -56,7 +56,7 @@ public class SoftBody {
 	//'rest_pos' is the rotated and moved mesh that the shape is actually pulled towards
 	Vector2[] base_rest_pos, rest_pos;
 	public Node[] nodes;
-	int external_nodes;
+	public int external_nodes;
 	
 	Spring[] springs;
 	//simulation substeps
@@ -68,31 +68,76 @@ public class SoftBody {
 	
 	//constructors
 		//circle
-	public SoftBody(String filename) {
+	public SoftBody(Vector2 pos, String filename, int id) {
+		System.out.println("SOFTBODY FILE");
 		try {
 			BufferedReader read = new BufferedReader(new FileReader(filename));
 			
 			String[] arr = read.readLine().split(" ");
-			int N = Integer.parseInt(arr[0]);
+			int NN = Integer.parseInt(arr[0]);
+			this.external_nodes = Integer.parseInt(arr[1]);
+			this.pos = new Vector2(pos);
 			
 			//always add the rest_pos springs as well.
+			//build rest_pos from the external nodes
+			//add an extra external_nodes to node count.
 			
 			//reading in nodes
-			this.nodes = new Node[N];
+			this.nodes = new Node[NN + this.external_nodes]; //for rest_pos
 			
-			for (int x = 0; x<N; x++) {
+			for (int x = 0; x<NN; x++) {
 				arr = read.readLine().split(" ");
-				
-				
+				this.nodes[x] = new Node(arr, this.pos);
+			}
+			//get pos here
+			//for (int x = 0; x<this.external_nodes; x++) this.pos.add(this.nodes[x].pos._mult(1.0 / this.external_nodes));
+			
+			this.base_rest_pos = new Vector2[this.external_nodes];
+			this.rest_pos = new Vector2[this.external_nodes];
+			
+			//create rest_pos;
+			for (int x = 0; x < this.external_nodes; x++) {
+				this.rest_pos[x] = new Vector2(this.nodes[x].pos);
+				this.base_rest_pos[x] = Vector2.sub(this.rest_pos[x], this.pos);
+				this.nodes[NN + x] = new Node(this.rest_pos[x], 0, "hook");
 			}
 			
+			//springs
+			
+			arr = read.readLine().split(" ");
+			int NS = Integer.parseInt(arr[0]);
+			this.k = Double.parseDouble(arr[1]);
+			this.springs = new Spring[NS + this.external_nodes];
+			
+			for (int x = 0; x<NS; x++) {
+				arr = read.readLine().split(" ");
+				if (arr.length == 2)
+					this.springs[x] = new Spring(this.nodes[Integer.parseInt(arr[0])], this.nodes[Integer.parseInt(arr[1])], this.k);
+				else this.springs[x] = new Spring(this.nodes[Integer.parseInt(arr[0])], this.nodes[Integer.parseInt(arr[1])], Double.parseDouble(arr[2]));
+			}
+			for (int x = 0; x< this.external_nodes; x++) {
+				this.springs[NS + x] = new Spring(this.nodes[x], this.nodes[NN + x], this.k);
+			}
+			
+			for (int x = 0; x<this.springs.length; x++) {
+				System.out.println(this.springs[x]);
+			}
+			
+			this.id = id;
+			
+			this.fill = Color.red;
+			
+			this.pol = new Polygon(this);
+			
+			read.close();
 			
 		}catch (Exception e) {
-			
+			e.printStackTrace();
 		}
 	}
 	
 	public SoftBody(Vector2 pos, double r, int id) {
+		System.out.println("SOFTBODY RADIUS");
 		
 		this.external_nodes = num;
 		this.nodes = new Node[2 * num + 1];
@@ -108,10 +153,10 @@ public class SoftBody {
 		}
 		
 		for (int x = 0; x < num; x++) {
-			this.nodes[num + x] = new Node(this.rest_pos[x], 0.75, "hook");
+			this.nodes[num + x] = new Node(this.rest_pos[x], 0, "hook");
 		}
 		
-		this.nodes[2 * num] = new Node(this.pos, 0.75, "hook");
+		this.nodes[2 * num] = new Node(this.pos, 0, "hook");
 		
 		
 		this.pol = new Polygon(this);
@@ -121,8 +166,8 @@ public class SoftBody {
 		this.springs = new Spring[4 * this.external_nodes];
 		
 		for (int x = 0; x < num; x++) {
-			this.springs[x] = new Spring(this.nodes[x], this.nodes[(x + 1) % this.nodes.length], k / num);
-			this.springs[this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[(x + num / 4) % this.nodes.length], k / num);
+			this.springs[x] = new Spring(this.nodes[x], this.nodes[(x + 1) % this.external_nodes], k / num);
+			this.springs[this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[(x + num / 4) % this.external_nodes], k / num);
 			this.springs[2 * this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[2 * num], k / num);
 			//this.springs[2 * this.nodes.length + x] = new Spring(this.nodes[x], this.nodes[(x + num / 2 - 1) % this.nodes.length], k / num);
 			this.springs[3 * this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[x + num], k / num);
@@ -181,18 +226,18 @@ public class SoftBody {
 		int idx = this.closest_side();
 		
 		this.nodes[idx].force.add(new Vector2(0, -10 * Game.player.mass));
-		this.nodes[(idx + this.nodes.length + 1) % this.nodes.length].force.add(new Vector2(0, -10 * Game.player.mass));
+		this.nodes[(idx + this.external_nodes + 1) % this.external_nodes].force.add(new Vector2(0, -10 * Game.player.mass));
 		
 	}
 	//apply_global_forces
 	public void apply_global_forces() {
-		for (int x = 0; x<this.nodes.length; x++) 
+		for (int x = 0; x<this.external_nodes; x++) 
 			this.nodes[x].force = new Vector2(0, -10 * this.nodes[x].mass);
 	}
 	//apply_spring_forces
 	public void apply_spring_forces() {
 		for (int x = 0; x<this.springs.length; x++) {
-			System.out.println("SPRING: " + x + "/" + this.springs.length);
+			//System.out.println("SPRING: " + x + "/" + this.springs.length);
 			this.springs[x].update();
 		}
 	}
@@ -229,17 +274,22 @@ public class SoftBody {
 			Vector2 normal = this.pol.sides[idx].norm();
 			
 			//Game.player.pos.add(normal._mult(2));
-			Game.player.collider.move(normal._mult(2));
-			this.pol.sides[idx].a.add(normal._mult(-1));
-			this.pol.sides[idx].b.add(normal._mult(-1));
+			Game.player.collider.move(normal._mult(1));
+			int total = -1;
+			if (this.nodes[idx].type.equals("node")) {
+				this.pol.sides[idx].a.add(normal._mult(this.nodes[(idx + this.external_nodes + 1) % this.external_nodes].type.equals("node") ? -0.5 : -1));
+				total += 0.5;
+			}
+			if (this.nodes[(idx + this.external_nodes + 1) % this.external_nodes].type.equals("node"))
+				this.pol.sides[idx].b.add(normal._mult(total));
 			
 			//player inherits some velocity
 			Vector2 vel_old = new Vector2(Game.player.vel);
-			Game.player.vel.set(Vector2.add(this.nodes[idx].vel, this.nodes[(idx + this.nodes.length + 1) % this.nodes.length].vel)._mult(0.5));
+			Game.player.vel.set(Vector2.add(this.nodes[idx].vel, this.nodes[(idx + this.external_nodes + 1) % this.external_nodes].vel)._mult(0.5));
 			
 			//update node velocities
 			this.nodes[idx].vel.set(vel_old);
-			this.nodes[(idx + this.nodes.length + 1) % this.nodes.length].vel.set(vel_old);
+			this.nodes[(idx + this.external_nodes + 1) % this.external_nodes].vel.set(vel_old);
 			
 			
 			
@@ -310,7 +360,7 @@ public class SoftBody {
 			if (Game.current_room.objects[x].pol == null) continue;
 			if (!Rectangle.intersect(this.pol.bounds, Game.current_room.objects[x].pol.bounds)) continue;
 			
-			for (int y = 0; y < this.nodes.length; y++) {
+			for (int y = 0; y < this.external_nodes; y++) {
 				if (Game.current_room.objects[x].pol.intersect(this.nodes[y].pos)) {
 					Game.current_room.objects[x].pol.displace(this.pos, this.nodes[y], false);
 					
@@ -336,9 +386,9 @@ public class SoftBody {
 	public void find_pos() {
 		Vector2 out = new Vector2();
 		
-		for (int x = 0; x<this.nodes.length; x++) out.add(this.nodes[x].pos);
+		for (int x = 0; x<this.external_nodes; x++) out.add(this.nodes[x].pos);
 		
-		this.pos.set(out._mult(1.0 / this.nodes.length));
+		this.pos.set(out._mult(1.0 / this.external_nodes));
 	}
 	//find_orientation
 	public void find_orientation() {
@@ -363,7 +413,7 @@ public class SoftBody {
 		
 		//this.angle = (this.id % 2 == 0 ? 1 : -1) * (double)(System.currentTimeMillis() % 5000) / 5000 * Math.PI * 2;
 
-		this.angle = Math.signum(angle) * Math.acos(Vector2.clamp(dot / this.nodes.length, -1, 1));
+		this.angle = Math.signum(angle) * Math.acos(Vector2.clamp(dot / this.external_nodes, -1, 1));
 		//this.angle = angle / this.nodes.length;
 	}
 	//change orientation direction of frame
@@ -506,7 +556,8 @@ public class SoftBody {
 
 	    if (!in.pol.intersect(this.pol)) return;
 
-	    for (int x = 0; x < this.nodes.length; x++) {
+	    for (int x = 0; x < this.external_nodes; x++) {
+	    	if (this.nodes[x].type.equals("fixed")) continue;
 	        if (!in.pol.intersect(this.nodes[x].pos)) continue;
 
 	        // --- find nearest point on in's boundary, same as before ---
@@ -526,7 +577,7 @@ public class SoftBody {
 
 	        Line line = in.pol.sides[index];
 	        int i1 = index;
-	        int i2 = (index + 1) % in.nodes.length;
+	        int i2 = (index + 1) % in.external_nodes;
 
 	        Vector2 n = Vector2.sub(p, this.nodes[x].pos).norm();
 	        double t = Vector2.dist(line.a, p) / Vector2.dist(line.a, line.b);
@@ -609,10 +660,10 @@ public class SoftBody {
 		
 		g.setColor(Color.orange);
 		
-		//g.drawPolygon(temp[0], temp[1], this.rest_pos.length);
+		g.drawPolygon(temp[0], temp[1], this.rest_pos.length);
 		
 		for (int x = 0; x<this.nodes.length; x++) {
-			//this.nodes[x].pos.draw_node(g, pane, xpos, ypos, location, Color.blue);
+			this.nodes[x].pos.draw_node(g, pane, xpos, ypos, location, Color.blue);
 		}
 		
 		
@@ -641,7 +692,7 @@ public class SoftBody {
 		}*/
 		
 		
-		//for (int x = 0; x<this.springs.length; x++) this.springs[x].draw(g, pane, xpos, ypos, location, false);
+		for (int x = 0; x<this.springs.length; x++) this.springs[x].draw(g, pane, xpos, ypos, location, false);
 		//for (int x = this.nodes.length * (this.nodes.length - 1) / 2; x<this.springs.length; x++) this.springs[x].draw(g);
 	
 	}

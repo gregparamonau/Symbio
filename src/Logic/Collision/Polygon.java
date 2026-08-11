@@ -19,8 +19,8 @@ public class Polygon {
 		//softbody parameter
 	public Polygon(SoftBody in) {
 		
-		this.pnts = new Vector2[in.nodes.length];
-		this.sides = new Line[in.nodes.length];
+		this.pnts = new Vector2[in.external_nodes];
+		this.sides = new Line[in.external_nodes];
 		
 		for (int x = 0; x<this.pnts.length; x++) 
 			this.pnts[x] = in.nodes[x].pos;

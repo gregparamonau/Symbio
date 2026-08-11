@@ -58,6 +58,7 @@ public class PlayerMovement {
 	public boolean jumped = false;
 	//dash
 	public boolean dashed = false;
+	public boolean wall_slide = false;
 	
 	
 	
@@ -104,6 +105,8 @@ displaced rect: (-142.55720079832, 461.6706041925653) LINE: (-55.6367095600847, 
 		
 		
 		if (this.dash_cooldown > 0) this.dash_cooldown--;
+		
+		this.wall_slide = this.state instanceof WallSlide;
 	}
 	
 	public void update_physics() {
