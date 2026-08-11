@@ -110,7 +110,7 @@ public class Camera {
 	}
 	public void draw_animations(Graphics g) {
 		for (Animation anim: Animation.anims) {
-			anim.play(false, Vector2.zero, false, g, Start.pane, this.pos.x, this.pos.y, "game");
+			//axnim.play(false, Vector2.zero, false, g, Start.pane, this.pos.x, this.pos.y, "game");
 		}
 	}
 	public void draw_HUD(Graphics g) {

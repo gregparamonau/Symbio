@@ -441,6 +441,7 @@ public class Room extends Rectangle{
 				room_num = x;
 				respawn_point_set = false;
 				Animation.clear_anims();
+				//Animation.update_anims();
 				Game.current_room = DataManager.load_room(room_num, Camera.tile_size, false);
 				Game.cam.recalculate_bounds();
 				return;

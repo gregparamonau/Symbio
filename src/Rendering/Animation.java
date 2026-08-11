@@ -21,13 +21,15 @@ public class Animation {
 	public static ArrayList<Animation> anims = new ArrayList<>();
 	
 	static BufferedImage[][] global_sprites = new BufferedImage[0][2];
-	static Map<String, Integer> anim_dict = new HashMap<>();
+	static Map<String, Integer[]> anim_dict = new HashMap<>();
+	static Map<Integer, String> location_dict = new HashMap<>();
 	
 	//index 0 for normal anim, index 1 for flipped anim
 	
 	public int index_start;
 	public int counter = -1, frame = 0;
 	Vector2 pos;
+	String file_name;
 	public boolean repeating = false, ended = false, flip = false, persistent = false;
 	int frequency, length;
 	public int id;
@@ -45,6 +47,8 @@ public class Animation {
 	
 	public Animation(String file, Vector2 pos, boolean create_flip, boolean persistent) {
 		this.pos = pos;
+		this.persistent = persistent;
+		this.file_name = file;
 		try {
 			BufferedImage temp = ImageIO.read(getClass().getResource(file));
 			
@@ -52,6 +56,21 @@ public class Animation {
 			this.length = temp.getRGB(0, 0) & 16777215; // 00000000_11111111_11111111_11111111
 			this.frequency = temp.getRGB(0, 1) & 16777215;
 			this.repeating = temp.getRGB(0, 2) == Color.white.getRGB();
+			
+			this.index_start = global_sprites.length;
+			
+			if (anim_dict.containsKey(file)) {
+				this.index_start = anim_dict.get(file)[0];
+				anims.add(this);
+				return;
+			}
+			
+			if (!anim_dict.containsKey(file)) {
+				anim_dict.put(file, new Integer[] {this.index_start, this.length});
+				location_dict.put(this.index_start, file);
+				anims.add(this);
+			}
+			
 			
 			System.out.println("L: " + this.length + " F: " + this.frequency + " R: " + this.repeating);
 			
@@ -61,18 +80,7 @@ public class Animation {
 				if (create_flip) barr[x][1] = Utility.flip(barr[x][0], false, true);
 			}
 			
-			this.index_start = global_sprites.length;
 			this.add_animation(barr);
-			
-			if (!anim_dict.containsKey(file)) {
-				anim_dict.put(file, this.index_start);
-			}
-			
-			this.index_start = anim_dict.get(file);
-			
-			this.persistent = persistent;
-			
-			anims.add(this);
 			
 		
 		}catch(IOException e) {
@@ -115,26 +123,53 @@ public class Animation {
 		global_sprites = out;
 	}
 	
-	public void clear_animation() {
-		BufferedImage[][] out = new BufferedImage[global_sprites.length - this.length][2];
+	public static void clear_animation(String filename, int start, int length) {
 		
-		System.arraycopy(global_sprites, 0, out, 0, this.index_start);
+		BufferedImage[][] out = new BufferedImage[global_sprites.length - length][2];
 		
-		int rem = global_sprites.length - this.index_start - this.length;
+		System.arraycopy(global_sprites, 0, out, 0, start);
 		
-		if (rem > 0) System.arraycopy(global_sprites, this.index_start + this.length, out, this.index_start, rem);
+		int rem = global_sprites.length - start - length;
+		
+		if (rem > 0) System.arraycopy(global_sprites, start + length, out, start, rem);
 		
 		global_sprites = out;
 	}
 	
 	public static void clear_anims() {
-		anims.removeIf(anim -> {
-			if (!anim.persistent) {
-				anim.clear_animation();
-				return true;
+		anim_dict.entrySet().removeIf(entry -> {
+			String key = entry.getKey();
+			int start = entry.getValue()[0], length = entry.getValue()[1];
+			
+			boolean cleared = anims.removeIf(anim -> {
+				return !anim.persistent && anim.file_name.equals(key);
+			});
+			
+			if (cleared) {
+				clear_animation(key, start, length);
+				update_anims(start, length);
 			}
-			return false;
+			return cleared;
 		});
+	}
+	public static void update_anims(int start, int length) {
+		for (String key: anim_dict.keySet()) {
+			int temp = anim_dict.get(key)[0];
+			if (temp > start) {
+				anim_dict.put(key, new Integer[] {temp - length, anim_dict.get(key)[1]});
+				location_dict.remove(temp);
+				location_dict.put(temp - length, key);
+			}	
+		}
+
+		
+		for (Animation anim: anims) {
+			if (anim_dict.containsKey(anim.file_name))
+				anim.index_start = anim_dict.get(anim.file_name)[0];
+		}
+	}
+	public String toString() {
+		return "FILE: " + this.file_name + " START: " + this.index_start;
 	}
 	
 	
