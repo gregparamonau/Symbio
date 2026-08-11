@@ -161,7 +161,6 @@ public class Animation {
 				location_dict.put(temp - length, key);
 			}	
 		}
-
 		
 		for (Animation anim: anims) {
 			if (anim_dict.containsKey(anim.file_name))
@@ -171,26 +170,5 @@ public class Animation {
 	public String toString() {
 		return "FILE: " + this.file_name + " START: " + this.index_start;
 	}
-	
-	
-	/*public static void add_new_animation(Animation in) {
-		Animation[] temp = new Animation[anims.length + 1];
-		for (int x = 0; x<anims.length; x++) {
-			temp[x] = anims[x];
-		}
-		temp[anims.length] = in;
-		temp[anims.length].id = anims.length;
-		
-		anims = temp;
-	}
-	public static void kill_animation(Animation in) {
-		Animation[] temp = new Animation[anims.length - 1];
-		
-		for (int x = 0; x<temp.length; x++) {
-			temp[x] = anims[(x < in.id ? x : x + 1)];
-			temp[x].id = x;
-		}
-		
-		anims = temp;
-	}*/
+
 }

@@ -60,13 +60,14 @@ public class Camera {
 		
 		Game.player.render.draw_player(g, Start.pane, this.pos.x, this.pos.y, "game");
 		
+		for (int x = 0; x<Game.current_room.enemies.length; x++) Game.current_room.enemies[x].draw_enemy(g, Start.pane, this.pos.x, this.pos.y, "game");
+		
 		for (int x = 0; x<Game.current_room.objects.length; x++) {
 			if (Game.current_room.objects[x] instanceof SBTerrain) continue;
 			Game.current_room.objects[x].draw_object(g, Start.pane, this.pos.x, this.pos.y, "game");
 			if (Game.current_room.objects[x].pol != null) 
 				Game.current_room.objects[x].pol.draw(g);
 		}
-		for (int x = 0; x<Game.current_room.enemies.length; x++) Game.current_room.enemies[x].draw_enemy(g, Start.pane, this.pos.x, this.pos.y, "game");
 		
 		
 		if (Game.debug_mode) {
