@@ -71,6 +71,7 @@ public class Polygon {
 			
 			Vector2 spot_temp = Line.find_node_on_line(this.sides[x], in.pos);
 			
+			///THIS NEXT LINE
 			if (Vector2.dot(Vector2.sub(spot_temp, in.pos), Vector2.sub(in.pos, pos)) > 0) continue;
 			
 			//System.out.println("SPOT_TEMP: " + spot_temp);

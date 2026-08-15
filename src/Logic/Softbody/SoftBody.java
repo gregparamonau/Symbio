@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.JPanel;
 
@@ -46,7 +48,9 @@ public class SoftBody {
 	//need to remove spring class
 	//need to remove polygon class?
 	//need to remove vector2 class
-	Vector2 pos;
+	//Vector2 pos;
+	Vector2[] poss;
+	double[] angles;
 	
 	public Polygon pol;
 	
@@ -54,14 +58,17 @@ public class SoftBody {
 	
 	//'base_rest_pos' is the very default non-rotated mesh that the shape has --> immutable
 	//'rest_pos' is the rotated and moved mesh that the shape is actually pulled towards
-	Vector2[] base_rest_pos, rest_pos;
+	Vector2[][] base_rest_pos, rest_pos;
 	public Node[] nodes;
 	public int external_nodes;
+	public int[][] frame_inds;
+	
+	boolean fixed = false;
 	
 	Spring[] springs;
 	//simulation substeps
 	final int num = 12, substeps = 1;
-	public double angle, rest_volume, k = 100;
+	public double rest_volume, k = 100;
 	
 	public int id;
 	
@@ -72,56 +79,79 @@ public class SoftBody {
 		System.out.println("SOFTBODY FILE");
 		try {
 			BufferedReader read = new BufferedReader(new FileReader(filename));
+			//file structure
+			//[# Nodes] [# external] [#frames] [# springs] [default mass] [default k]
+			double[] header = Arrays.stream(read.readLine().split(" ")).mapToDouble(Double::parseDouble).toArray();
+	
+			int NN = (int)header[0], NF = (int)header[2], NS = (int)header[3];
+			this.external_nodes = (int)header[1];
+			double default_mass = header[4];
+			this.k = header[5];
 			
-			String[] arr = read.readLine().split(" ");
-			int NN = Integer.parseInt(arr[0]);
-			this.external_nodes = Integer.parseInt(arr[1]);
-			this.pos = new Vector2(pos);
+			//initialise all arrays
+			this.poss = new Vector2[NF];
+			Node[] core_nodes = new Node[NN]; //copy later into new one
+			Spring[] core_springs = new Spring[NS];
+			this.base_rest_pos = new Vector2[NF][];
+			this.rest_pos = new Vector2[NF][];
+			this.frame_inds = new int[NF][];
+			this.angles = new double[NF];
 			
-			//always add the rest_pos springs as well.
-			//build rest_pos from the external nodes
-			//add an extra external_nodes to node count.
-			
-			//reading in nodes
-			this.nodes = new Node[NN + this.external_nodes]; //for rest_pos
-			
+			//read in base nodes
+			String[] arr;
 			for (int x = 0; x<NN; x++) {
 				arr = read.readLine().split(" ");
-				this.nodes[x] = new Node(arr, this.pos);
-			}
-			//get pos here
-			//for (int x = 0; x<this.external_nodes; x++) this.pos.add(this.nodes[x].pos._mult(1.0 / this.external_nodes));
-			
-			this.base_rest_pos = new Vector2[this.external_nodes];
-			this.rest_pos = new Vector2[this.external_nodes];
-			
-			//create rest_pos;
-			for (int x = 0; x < this.external_nodes; x++) {
-				this.rest_pos[x] = new Vector2(this.nodes[x].pos);
-				this.base_rest_pos[x] = Vector2.sub(this.rest_pos[x], this.pos);
-				this.nodes[NN + x] = new Node(this.rest_pos[x], 0, "hook");
+				core_nodes[x] = new Node(arr, pos, default_mass);
 			}
 			
+			ArrayList<Node> nodes_t = new ArrayList<>();
+			ArrayList<Spring> springs_t = new ArrayList<>();
+			
+			//read in the frames
+			int[] inds;
+			for (int x = 0; x<NF; x++) {
+				inds = Arrays.stream(read.readLine().split(" ")).mapToInt(Integer::parseInt).toArray();
+				this.base_rest_pos[x] = new Vector2[inds.length];
+				this.rest_pos[x] = new Vector2[inds.length];
+				this.frame_inds[x] = inds;
+				
+				for (int i = 0; i < inds.length; i++) {
+					this.rest_pos[x][i] = new Vector2(core_nodes[inds[i]].pos);
+					Node temp = new Node(this.rest_pos[x][i], 0, "hook");
+					nodes_t.add(temp);
+					springs_t.add(new Spring(core_nodes[inds[i]], temp, this.k));
+				}
+				
+				//make base_rest_pos
+				this.poss[x] = Vector2.ave(this.rest_pos[x]);
+				for (int i = 0; i < inds.length; i++) 
+					this.base_rest_pos[x][i] = Vector2.sub(this.rest_pos[x][i], this.poss[x]);
+				
+				//done creating nodes and structures
+			}
+			
+			//create springs specified in fil	
 			//springs
 			
-			arr = read.readLine().split(" ");
-			int NS = Integer.parseInt(arr[0]);
-			this.k = Double.parseDouble(arr[1]);
-			this.springs = new Spring[NS + this.external_nodes];
-			
+			//create base springs
 			for (int x = 0; x<NS; x++) {
 				arr = read.readLine().split(" ");
 				if (arr.length == 2)
-					this.springs[x] = new Spring(this.nodes[Integer.parseInt(arr[0])], this.nodes[Integer.parseInt(arr[1])], this.k);
-				else this.springs[x] = new Spring(this.nodes[Integer.parseInt(arr[0])], this.nodes[Integer.parseInt(arr[1])], Double.parseDouble(arr[2]));
-			}
-			for (int x = 0; x< this.external_nodes; x++) {
-				this.springs[NS + x] = new Spring(this.nodes[x], this.nodes[NN + x], this.k);
+					core_springs[x] = new Spring(core_nodes[Integer.parseInt(arr[0])], core_nodes[Integer.parseInt(arr[1])], this.k);
+				else core_springs[x] = new Spring(core_nodes[Integer.parseInt(arr[0])], core_nodes[Integer.parseInt(arr[1])], Double.parseDouble(arr[2]));
 			}
 			
-			for (int x = 0; x<this.springs.length; x++) {
-				System.out.println(this.springs[x]);
-			}
+			
+			//merge core and actual into final  everything
+			
+			this.nodes = new Node[NN + nodes_t.size()];
+			this.springs = new Spring[NS + springs_t.size()];
+			
+			System.arraycopy(core_nodes, 0, this.nodes, 0, NN);
+			System.arraycopy(nodes_t.toArray(), 0, this.nodes, NN, nodes_t.size());
+			
+			System.arraycopy(core_springs, 0, this.springs, 0, NS);
+			System.arraycopy(springs_t.toArray(), 0, this.springs, NS, springs_t.size());
 			
 			this.id = id;
 			
@@ -134,50 +164,6 @@ public class SoftBody {
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public SoftBody(Vector2 pos, double r, int id) {
-		System.out.println("SOFTBODY RADIUS");
-		
-		this.external_nodes = num;
-		this.nodes = new Node[2 * num + 1];
-		this.base_rest_pos = new Vector2[num];
-		this.rest_pos = new Vector2[num];
-		this.pos = pos;
-		
-		for (int x = 0; x<num; x++) {
-			this.nodes[x] = new Node(new Vector2(this.pos.x + r * Math.cos(x * 2 * Math.PI / num), this.pos.y + r * Math.sin(x * 2 * Math.PI / num)), 0.75, "node");
-			System.out.println(this.nodes[x]);
-			this.rest_pos[x] = new Vector2(this.nodes[x].pos);
-			this.base_rest_pos[x] = Vector2.sub(this.rest_pos[x], this.pos);
-		}
-		
-		for (int x = 0; x < num; x++) {
-			this.nodes[num + x] = new Node(this.rest_pos[x], 0, "hook");
-		}
-		
-		this.nodes[2 * num] = new Node(this.pos, 0, "hook");
-		
-		
-		this.pol = new Polygon(this);
-		
-		//how to arrange springs?
-		
-		this.springs = new Spring[4 * this.external_nodes];
-		
-		for (int x = 0; x < num; x++) {
-			this.springs[x] = new Spring(this.nodes[x], this.nodes[(x + 1) % this.external_nodes], k / num);
-			this.springs[this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[(x + num / 4) % this.external_nodes], k / num);
-			this.springs[2 * this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[2 * num], k / num);
-			//this.springs[2 * this.nodes.length + x] = new Spring(this.nodes[x], this.nodes[(x + num / 2 - 1) % this.nodes.length], k / num);
-			this.springs[3 * this.external_nodes + x] = new Spring(this.nodes[x], this.nodes[x + num], k / num);
-		}
-		
-		this.id = id;
-		
-		this.fill = Color.red;//new Color((int)(Math.random() * 255), (int)(Math.random() * 255), (int)(Math.random() * 255));
-		
-		//TODO: id & find_volume
 	}
 		//shape
 	//update (nodes, springs, etc.)
@@ -231,12 +217,14 @@ public class SoftBody {
 	}
 	//apply_global_forces
 	public void apply_global_forces() {
-		for (int x = 0; x<this.external_nodes; x++) 
-			this.nodes[x].force = new Vector2(0, -10 * this.nodes[x].mass);
+		for (int x = 0; x<this.nodes.length; x++) 
+			if (this.nodes[x].type.equals("node")) this.nodes[x].force = new Vector2(0, -10 * this.nodes[x].mass);
 	}
 	//apply_spring_forces
 	public void apply_spring_forces() {
 		for (int x = 0; x<this.springs.length; x++) {
+	        if (this.springs[x] == null) continue;
+
 			//System.out.println("SPRING: " + x + "/" + this.springs.length);
 			this.springs[x].update();
 		}
@@ -296,60 +284,6 @@ public class SoftBody {
 			
 			count++;
 		}
-		/*while (Game.player.get_pol().intersect(this.pol)) {
-			
-			
-			
-			System.out.println("TRUE: " + this.id);
-			//find closest line segment
-			
-			double closest_dist = 100000;
-			int idx = 0;
-			for (int x = 0; x<this.pol.sides.length; x++) {
-				double dist = Math.min(Vector2.dist(this.pol.sides[x].a, Game.player.pos), Vector2.dist(this.pol.sides[x].b, Game.player.pos));
-				
-				if (dist < closest_dist) {
-					closest_dist = dist;
-					idx = x;
-				}
-			}
-			
-			
-			
-			Vector2 tempa = new Vector2(this.pol.sides[idx].a);
-			Vector2 tempb = new Vector2(this.pol.sides[idx].b);
-			
-			double area = this.pol.area();
-			
-			Vector2 adja = Vector2.sub(Game.player.pos, this.pol.sides[idx].a);
-			adja = adja.norm()._mult(6.5 + adja.l());
-			
-			Vector2 adjb = Vector2.sub(Game.player.pos, this.pol.sides[idx].b);
-			adjb = adjb.norm()._mult(6.5 + 1 + adjb.l());
-			
-			Vector2 afin = Vector2.add(this.pol.sides[idx].b, adjb);
-			Vector2 bfin = Vector2.add(this.pol.sides[idx].a, adja);
-			
-			this.pol.sides[idx].a.set(afin);
-			this.nodes[idx].vel.set(Game.player.vel);
-			
-			this.pol.sides[idx].b.set(bfin);
-			this.nodes[(idx + this.nodes.length + 1) % this.nodes.length].vel.set(Game.player.vel);
-			
-			if (this.pol.area() > area) {
-				this.pol.sides[idx].a.set(tempa);
-				this.pol.sides[idx].b.set(tempb);
-			}
-			
-			
-			
-			Game.player.vel.set(new Vector2());
-			Game.player.pos.add(Vector2.add(adja, adjb)._mult(-0.2));
-			
-			break;
-			
-			
-		}*/
 	}
 	
 	
@@ -362,10 +296,11 @@ public class SoftBody {
 			
 			for (int y = 0; y < this.external_nodes; y++) {
 				if (Game.current_room.objects[x].pol.intersect(this.nodes[y].pos)) {
-					Game.current_room.objects[x].pol.displace(this.pos, this.nodes[y], false);
+					Game.current_room.objects[x].pol.displace(Vector2.ave(this.poss), this.nodes[y], false);
 					
 					if (Game.current_room.objects[x].object_handle != -1) {
-						this.pos.add(((Mover)Game.current_room.objects[Game.current_room.objects[x].object_handle]).move);
+						for (int i = 0; i<this.frame_inds.length; i++)
+							this.poss[i].add(((Mover)Game.current_room.objects[Game.current_room.objects[x].object_handle]).move);
 						
 						this.nodes[y].vel.add(((Mover)Game.current_room.objects[Game.current_room.objects[x].object_handle]).move);
 					}
@@ -384,11 +319,14 @@ public class SoftBody {
 	//shape memory section
 	//find_pos
 	public void find_pos() {
-		Vector2 out = new Vector2();
 		
-		for (int x = 0; x<this.external_nodes; x++) out.add(this.nodes[x].pos);
-		
-		this.pos.set(out._mult(1.0 / this.external_nodes));
+		for (int x = 0; x<this.frame_inds.length; x++) {
+			Vector2 temp = new Vector2();
+			for (int i = 0; i < this.frame_inds[x].length; i++) {
+				temp.add(this.nodes[this.frame_inds[x][i]].pos);
+			}
+			this.poss[x].set(temp._mult(1.0 / this.frame_inds[x].length));
+		}
 	}
 	//find_orientation
 	public void find_orientation() {
@@ -398,33 +336,34 @@ public class SoftBody {
 		
 		//average dot
 		
-		double dot = 0.0;
-		
-		double angle = 0.0;
-		
-		for (int x = 0; x<this.external_nodes; x++) {
-			Vector2 vec = Vector2.sub(this.nodes[x].pos, this.pos);
-			double ang = Vector2.angle(this.base_rest_pos[x], vec);
+		for (int x = 0; x<this.angles.length; x++) {
+			double dot = 0.0;
+			double angle = 0.0;
 			
-			dot += Vector2.ndot(this.base_rest_pos[x], vec);
+			for (int i = 0; i < this.frame_inds[x].length; i++) {
+				Vector2 vec = Vector2.sub(this.nodes[this.frame_inds[x][i]].pos, this.poss[x]);
+				
+				dot += Vector2.ndot(this.base_rest_pos[x][i], vec);
+				
+				angle += Vector2.angle(this.base_rest_pos[x][i], vec);
+			}
 			
-			angle += Vector2.angle(this.base_rest_pos[x], vec);
+			this.angles[x] = Math.signum(angle) * Math.acos(Vector2.clamp(dot / this.frame_inds[x].length, -1, 1));
 		}
-		
-		//this.angle = (this.id % 2 == 0 ? 1 : -1) * (double)(System.currentTimeMillis() % 5000) / 5000 * Math.PI * 2;
-
-		this.angle = Math.signum(angle) * Math.acos(Vector2.clamp(dot / this.external_nodes, -1, 1));
-		//this.angle = angle / this.nodes.length;
 	}
 	//change orientation direction of frame
 	public void change_orientation() {
+		if (this.fixed) return;
 		//make sure to use .set since it alters the vector2 without reassigning memory
-		for (int x = 0; x<this.rest_pos.length; x++) {
-			this.rest_pos[x].set(Vector2.add(this.pos, this.base_rest_pos[x].rotate(this.angle)));
+		for (int x = 0; x<this.frame_inds.length; x++) {
+			
+			for (int i = 0; i < this.frame_inds[x].length; i++) {
+				this.rest_pos[x][i].set(Vector2.add(this.poss[x], this.base_rest_pos[x][i].rotate(this.angles[x])));
+			}
 		}
 	}
 	//change location and rotation of rest_pos
-	public void configure() {
+	public void configure() {		
 		this.find_orientation();
 		
 		this.change_orientation();
@@ -587,8 +526,8 @@ public class SoftBody {
 	        // Treat 'in's edge as a single effective point mass, blended by t
 	        // between its two endpoint masses.
 	        double m1 = this.nodes[x].mass;
-	        double m2a = in.nodes[i1].mass;
-	        double m2b = in.nodes[i2].mass;
+	        double m2a = in.nodes[i1].type.equals("node") ? in.nodes[i1].mass : Double.MAX_VALUE;
+	        double m2b = in.nodes[i2].type.equals("node") ? in.nodes[i2].mass : Double.MAX_VALUE;
 	        double m2 = (1 - t) * m2a + t * m2b;
 
 	        double totalMass = m1 + m2;
@@ -604,8 +543,8 @@ public class SoftBody {
 	        // in's edge nodes move forward along n by w2 * penetration,
 	        // split between the two endpoints by (1 - t) / t weighting
 	        Vector2 correctionIn = n._mult(-w2 * penetration);
-	        in.nodes[i1].pos.add(correctionIn._mult(1 - t));
-	        in.nodes[i2].pos.add(correctionIn._mult(t));
+	        if (in.nodes[i1].type.equals("node")) in.nodes[i1].pos.add(correctionIn._mult(1 - t));
+	        if (in.nodes[i2].type.equals("node")) in.nodes[i2].pos.add(correctionIn._mult(t));
 
 	        // --- clear forces (as before) ---
 	        this.nodes[x].force = new Vector2(0, 0);
@@ -636,10 +575,15 @@ public class SoftBody {
 
 	            // in's edge loses impulse, split back out by (1 - t)/t onto the two endpoints
 	            Vector2 inImpulse = impulse._mult(-1.0 / m2);
-	            in.nodes[i1].vel.add(inImpulse._mult(1 - t));
-	            in.nodes[i2].vel.add(inImpulse._mult(t));
-	            in.nodes[i1].vel = in.nodes[i1].vel._mult(VDAMP);
-	            in.nodes[i2].vel = in.nodes[i2].vel._mult(VDAMP);
+	            if (in.nodes[i1].type.equals("node")) {
+	            	in.nodes[i1].vel.add(inImpulse._mult(1 - t));
+	            	in.nodes[i1].vel = in.nodes[i1].vel._mult(VDAMP);
+	            }
+	            
+	            if (in.nodes[i2].type.equals("node")) {
+	            	in.nodes[i2].vel.add(inImpulse._mult(t));
+		            in.nodes[i2].vel = in.nodes[i2].vel._mult(VDAMP);
+	            }
 	        }
 	    }
 	}
@@ -647,6 +591,7 @@ public class SoftBody {
 	
 	//draw TODO: make this work with proper texture rendering
 	public void draw(Graphics g, JPanel pane, double xpos, double ypos, String location) {
+		for (int x = 0; x<this.nodes.length; x++) System.out.println(this.nodes[x]);
 		//if (!(this.id == 2 || this.id == 3 || this.id == 4 || this.id == 6 || this.id == 14)) return;
 		
 		int[][] temp = this.to_polygon(pane, xpos, ypos, location);
@@ -656,11 +601,15 @@ public class SoftBody {
 		g.setColor(Color.blue);		
 		g.drawPolygon(temp[0], temp[1], this.external_nodes);
 		
-		temp = this.to_polygon(this.rest_pos, pane, xpos, ypos, location);
+		if (false) return;
 		
-		g.setColor(Color.orange);
-		
-		g.drawPolygon(temp[0], temp[1], this.rest_pos.length);
+		for (int x = 0; x<this.frame_inds.length; x++) {
+			temp = this.to_polygon(this.rest_pos[x], pane, xpos, ypos, location);
+			
+			g.setColor(Color.orange);
+			
+			g.drawPolygon(temp[0], temp[1], this.rest_pos[x].length);
+		}
 		
 		for (int x = 0; x<this.nodes.length; x++) {
 			this.nodes[x].pos.draw_node(g, pane, xpos, ypos, location, Color.blue);
@@ -692,7 +641,10 @@ public class SoftBody {
 		}*/
 		
 		
-		for (int x = 0; x<this.springs.length; x++) this.springs[x].draw(g, pane, xpos, ypos, location, false);
+		for (int x = 0; x<this.springs.length; x++) {
+			if (this.springs[x] == null) continue;
+			this.springs[x].draw(g, pane, xpos, ypos, location, false);
+		}
 		//for (int x = this.nodes.length * (this.nodes.length - 1) / 2; x<this.springs.length; x++) this.springs[x].draw(g);
 	
 	}
@@ -711,16 +663,14 @@ public class SoftBody {
 	}
 	
 	public int[][] to_polygon(Vector2[] in, JPanel pane, double xpos, double ypos, String location) {
-		int[][] out = new int[2][this.external_nodes];
-		
-		for (int x = 0; x<out[0].length; x++) {
-			Vector2 temp = Vector2.converted_pos(in[x], pane, xpos, ypos, location);
-			out[0][x] = (int)temp.x;
-			out[1][x] = (int)temp.y;
-
-		}
-		
-		return out;
+	    int[][] out = new int[2][in.length];
+	    
+	    for (int x = 0; x < in.length; x++) {
+	        Vector2 temp = Vector2.converted_pos(in[x], pane, xpos, ypos, location);
+	        out[0][x] = (int)temp.x;
+	        out[1][x] = (int)temp.y;
+	    }
+	    return out;
 	}
 	
 	

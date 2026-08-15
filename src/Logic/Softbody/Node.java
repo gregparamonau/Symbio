@@ -34,13 +34,19 @@ public class Node {
 		this.mass = mass;
 	}
 	
-	public Node(String[] in, Vector2 pos) {
+	public Node(String[] in, Vector2 pos, double mass) {
 		//external purely used for sorting when saving the file.
 		this.type = in[0];
 		this.pos.set(Vector2.add(new Vector2(Double.parseDouble(in[1]), Double.parseDouble(in[2])), pos));
 		//from here, only node and fixed, no hook from here
-		if (in[0].equals("node")) this.mass = Double.parseDouble(in[3]);
+		if (in[0].equals("node")) {
+			if (in.length == 3) this.mass = mass;
+			else this.mass = Double.parseDouble(in[3]);
+		}
 		else this.mass = 0;
+		
+		this.vel = new Vector2();
+		this.force = new Vector2();
 	}
 	
 	//update (verlet integration or better)
@@ -56,6 +62,10 @@ public class Node {
 			
 			this.last_pos = new Vector2(this.pos);
 			if (this.type.equals("node")) this.pos.add(this.vel._mult(v_drag));
+		}
+		else {
+			this.vel.set(Vector2.zero);
+			this.force.set(Vector2.zero);
 		}
 	}
 	//TODO: fix

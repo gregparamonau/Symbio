@@ -33,7 +33,7 @@ public class SBTerrain extends GameObject{
 		};
 		
 		System.out.println("STARTING SB");
-		this.sb = new SoftBody(new Vector2(this.pos), "/Users/gregoryparamonau/Downloads/softbody_test.txt", id);
+		this.sb = new SoftBody(new Vector2(this.pos), "/Users/gregoryparamonau/DATA_FILES/sb_test.txt", id);
 		//this.sb = new SoftBody(new Vector2(x, y), r, id);
 		
 		this.start_nodes();
@@ -52,7 +52,7 @@ public class SBTerrain extends GameObject{
 	}
 	
 	public void start() {		
-		this.sb = new SoftBody(new Vector2(this.pos), "/Users/gregoryparamonau/Downloads/softbody_test.txt", id);
+		this.sb = new SoftBody(new Vector2(this.pos), "/Users/gregoryparamonau/DATA_FILES/sb_test.txt", id);
 		this.pol = null;
 	}
 	

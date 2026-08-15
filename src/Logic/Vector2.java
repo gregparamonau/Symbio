@@ -306,6 +306,12 @@ public class Vector2 {
 		}
 		return out;
 	}
+	public static Vector2 ave(Vector2[] in) {
+		Vector2 out = new Vector2();
+		for (int x = 0; x<in.length; x++) out.add(in[x]);
+		
+		return out._mult(1.0 / in.length);
+	}
 	
 	public static JPanel rescale(JPanel in, double scale) {
 		JPanel out = new JPanel();
