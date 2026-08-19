@@ -2,7 +2,7 @@
 
 A 2D action-platformer built entirely from scratch in Java, set inside the human body. You play as a microscopic robot navigating biological environments made of soft, physically-simulated tissue. No external libraries or engines were used. Everything, including the physics, collision, rendering, and level editor, is custom-built.
 
-![Symbio screenshot](screenshot.png)
+![](symbio_env.png)
 
 ---
 
@@ -20,7 +20,7 @@ The player has two separate velocity vectors: `vel`, which is input-driven, and 
 
 **Jump** - variable height jump. Holding jump floats the player at the apex. Gravity switches between `gravity_normal`, `gravity_heavy`, and `gravity_light` depending on input and jump state. Coyote time and jump buffering are both implemented.
 
-**Dash** - directional dash with a brief input buffer window after the input to let the player choose direction. On exit, the dash velocity is converted into `momentum` via `end_dash()`, which persists and decays separately from normal velocity, allowing the player to carry speed out of a dash.
+**Dash** - 8-directional dash with a brief input buffer window after the input to let the player choose direction. On exit, the dash velocity is converted into `momentum` via `end_dash()`, which persists and decays separately from normal velocity, allowing the player to carry speed out of a dash.
 
 **Wall Slide** - the player grabs walls and slides slowly downward. Wall jumping is directional depending on what the player is holding: away from the wall, toward the wall, or straight up. A direction buffer gives the player a few frames to decide before the jump fires.
 
@@ -32,7 +32,7 @@ The player has two separate velocity vectors: `vel`, which is input-driven, and 
 
 ![](symbio_attack.png)
 
-**Slash** - 8-directional attack with a direction buffer window after the input fires, giving the player a few frames to aim. Hit detection uses a rectangular hitbox offset from the player in the slash direction.
+**Slash** - 4-directional attack with a direction buffer window after the input fires, giving the player a few frames to aim. Hit detection uses a rectangular hitbox offset from the player in the slash direction.
 
 **Pogo** - a downward slash that bounces the player upward on hit. Gravity is reduced during the float phase, giving it a satisfying floaty feel.
 
