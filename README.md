@@ -2,9 +2,7 @@
 
 A 2D action-platformer built entirely from scratch in Java, set inside the human body. You play as a microscopic robot navigating biological environments made of soft, physically-simulated tissue. No external libraries or engines were used. Everything, including the physics, collision, rendering, and level editor, is custom-built.
 
-<video src="https://github.com/gregparamonau/Symbio/raw/master/symbio_game.mp4" controls width="100%"></video>
-
-![](symbio_env.png)
+[![Symbio Demo](symbio_env.png)](https://youtu.be/8TJNs90CQxg)
 
 ---
 
