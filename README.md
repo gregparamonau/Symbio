@@ -30,6 +30,8 @@ The player has two separate velocity vectors: `vel`, which is input-driven, and 
 
 ## Combat
 
+![](symbio_attack.png)
+
 **Slash** - 8-directional attack with a direction buffer window after the input fires, giving the player a few frames to aim. Hit detection uses a rectangular hitbox offset from the player in the slash direction.
 
 **Pogo** - a downward slash that bounces the player upward on hit. Gravity is reduced during the float phase, giving it a satisfying floaty feel.
@@ -41,6 +43,8 @@ The player has two separate velocity vectors: `vel`, which is input-driven, and 
 ---
 
 ## Soft Body Physics
+
+![](symbio_sb.png)
 
 The main technical system in the game. Soft bodies are deformable mesh objects that make up the biological terrain and obstacles throughout the levels.
 
@@ -99,6 +103,8 @@ The game renders at a fixed low resolution scaled up by `pixel_size` (default 5x
 ---
 
 ## Level Editor
+
+![](level_edit.png)
 
 A separate editing mode with two sub-editors. **GameEditor** is the overall map view, where rooms are shown as rectangles and can be added and positioned on a grid. **RoomEditor** lets you edit the contents of a single room, placing, moving, and configuring game objects. Text input for object properties is handled via a dialog system (`OptionPane`).
 
