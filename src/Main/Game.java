@@ -32,7 +32,7 @@ public class Game {
 	public static Player player = new Player();
 	public static Camera cam = new Camera(0, 0);
 	public static Room current_room = new Room();
-	public static double speed_mult = 1;
+	public static double speed_mult = 0.9; //fix this to some number which is satisfying yet fast enough for good combat
 	public static int frame_rate = 60;
 	
 	public static int level_num = 1;

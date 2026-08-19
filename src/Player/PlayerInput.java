@@ -62,7 +62,7 @@ public class PlayerInput {
 			
 			for (int x = 0; x<Game.current_room.objects.length; x++) {
 				if (Game.current_room.objects[x] instanceof SBTerrain) {
-					Game.current_room.objects[x].sb = new SoftBody(new Vector2(Game.current_room.objects[x].pos), "/Users/gregoryparamonau/DATA_FILES/sb_test.txt", Game.current_room.objects[x].id);
+					Game.current_room.objects[x].sb = new SoftBody(new Vector2(Game.current_room.objects[x].pos), "/Users/gregoryparamonau/DATA_FILES/sb3.txt", Game.current_room.objects[x].id);
 				}
 			}
 			

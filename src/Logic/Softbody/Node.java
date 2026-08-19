@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import javax.swing.JPanel;
 
 import Logic.Vector2;
+import Main.Game;
 
 public class Node {
 	String type; //node, hook, fixed
@@ -50,23 +51,19 @@ public class Node {
 	}
 	
 	//update (verlet integration or better)
-	public void update(double dt) {
-		
-		double max_f = 50, v_drag = 0.85;
-		
-		if (this.type.equals("node")) {
-			if (this.force.l() > max_f) this.force = this.force.norm()._mult(max_f);
-			
-			//euler integration
-			this.vel.add(this.force._mult(1.0 / this.mass)._mult(dt));
-			
-			this.last_pos = new Vector2(this.pos);
-			if (this.type.equals("node")) this.pos.add(this.vel._mult(v_drag));
-		}
-		else {
-			this.vel.set(Vector2.zero);
-			this.force.set(Vector2.zero);
-		}
+	public void update(double dt, int substeps) {
+	    double v_drag = 1;
+	    double max_f = 50;
+	    
+	    if (this.type.equals("node")) {
+	        if (this.force.l() > max_f) this.force = this.force.norm()._mult(max_f);
+	        this.vel.add(this.force._mult(dt / this.mass));
+	        this.last_pos = new Vector2(this.pos);
+	        this.pos.add(this.vel._mult(v_drag / substeps)); // scale by substeps here
+	    } else {
+	        this.vel.set(Vector2.zero);
+	        this.force.set(Vector2.zero);
+	    }
 	}
 	//TODO: fix
 	public void draw_node(Graphics g, JPanel pane, double xpos, double ypos, String location) {

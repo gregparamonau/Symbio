@@ -62,6 +62,11 @@ public class PlayerRender {
 		this.draw_antenna(g, pane, xin, yin, location, null);
 		this.anim.play(false, Vector2.zero, (this.player.input.last_dir == -1/* && !this.player.wall_slide*/) || (/*this.player.movement.wall_slide && */this.player.collider.col_right), g, pane, xin, yin, location);
 		
+		//g.setColor(Color.black);
+		//Vector2 temp = Vector2.converted_pos(new Vector2(this.player.pos.x, this.player.pos.y + 10), pane, xin, yin, location);
+		//g.drawString("" + this.player.movement.gravity, (int)temp.x, (int)temp.y);
+		//g.drawString("" + this.player.object_intersect_id, (int)temp.x, (int)temp.y - 15);
+		
 		if (Game.debug_mode) {
 			for (int x = 0; x<poss.length; x++) {
 				this.poss[x].draw_node(g, pane, xin, yin, location, Color.magenta);

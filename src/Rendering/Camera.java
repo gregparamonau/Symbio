@@ -31,7 +31,7 @@ public class Camera {
 	public static Vector2 HUD_offset;
 	public Animation health_sprite;
 	
-	public static final double pixel_size_game = 6, pixel_size_edit = 4;
+	public static final double pixel_size_game = 5, pixel_size_edit = 4;
 	
 	public static final int tile_size = 8;
 	public static double pixel_size = pixel_size_game;

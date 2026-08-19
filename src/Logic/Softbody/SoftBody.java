@@ -18,37 +18,6 @@ import Player.Player;
 import GameObject.Objects.Mover;
 
 public class SoftBody {
-	//ISSUES TO FIX:
-		//squares collapsing in on each other
-		//performance needs to be offloaded to a separate thread.
-			//instead of storing vertices in 'Node' class, just use 3 arrays, pos, vel, force in SB class that handles this. should be significantly faster than Node
-	//position
-	/*
-	float xpos, ypos;
-	
-	//base_rest_poses
-	float[] base_rest_pos_x, base_rest_pos_y;
-	float[] rest_pos_x, rest_pos_y;
-	
-	//nodes
-	float[] xverts, yverts;
-	float[] xvels, yvels;
-	float[] xforce, yforce;
-	
-	//springs --> indices of spring.a and spring.b in the above 'node' arrays;
-	//springs between nodes
-	int[] aspr, bspr;
-	
-	//springs between node and vector
-	float vec_spr_x, vec_spr_y; 
-	boolean[] spr_hooked;
-	float[] ks;//each spring has its own k value...*/
-	
-	//need to remove node class
-	//need to remove spring class
-	//need to remove polygon class?
-	//need to remove vector2 class
-	//Vector2 pos;
 	Vector2[] poss;
 	double[] angles;
 	
@@ -66,17 +35,16 @@ public class SoftBody {
 	boolean fixed = false;
 	
 	Spring[] springs;
-	//simulation substeps
-	final int num = 12, substeps = 1;
+	final int num = 12;
 	public double rest_volume, k = 100;
 	
-	public int id;
+	public int id, substeps = 1;
 	
 	
 	//constructors
 		//circle
 	public SoftBody(Vector2 pos, String filename, int id) {
-		System.out.println("SOFTBODY FILE");
+		double max_k = 0;
 		try {
 			BufferedReader read = new BufferedReader(new FileReader(filename));
 			//file structure
@@ -121,6 +89,7 @@ public class SoftBody {
 					nodes_t.add(temp);
 					springs_t.add(new Spring(core_nodes[inds[i]], temp, this.k));
 				}
+				max_k = Math.max(max_k, this.k);
 				
 				//make base_rest_pos
 				this.poss[x] = Vector2.ave(this.rest_pos[x]);
@@ -139,6 +108,7 @@ public class SoftBody {
 				if (arr.length == 2)
 					core_springs[x] = new Spring(core_nodes[Integer.parseInt(arr[0])], core_nodes[Integer.parseInt(arr[1])], this.k);
 				else core_springs[x] = new Spring(core_nodes[Integer.parseInt(arr[0])], core_nodes[Integer.parseInt(arr[1])], Double.parseDouble(arr[2]));
+				max_k = Math.max(core_springs[x].k, max_k);
 			}
 			
 			
@@ -152,6 +122,9 @@ public class SoftBody {
 			
 			System.arraycopy(core_springs, 0, this.springs, 0, NS);
 			System.arraycopy(springs_t.toArray(), 0, this.springs, NS, springs_t.size());
+			
+			
+			this.substeps = Math.max((int)(max_k / 25), 1);
 			
 			this.id = id;
 			
@@ -168,17 +141,14 @@ public class SoftBody {
 		//shape
 	//update (nodes, springs, etc.)
 	//rewrite this completely
-	public void update() {
-		this.apply_global_forces();
+	public void update() {		
 		
-		this.apply_entity_forces();
-		
-		//System.out.println("DT GLOBAL FORCES: " + (b - a) / 1000000.0);
-		
-		this.apply_spring_forces();
-		
-		this.integrate_nodes(1.0 / Game.frame_rate);
-
+		for (int x = 0; x<this.substeps; x++) {
+			this.apply_global_forces(); 
+			this.apply_entity_forces();
+			this.apply_spring_forces();
+			this.integrate_nodes(1.0 / Game.frame_rate / substeps);
+		}
 		//intersect with other sbs
 		for (int x = 0; x<Game.current_room.objects.length; x++) {
 			if (Game.current_room.objects[x].sb == null) continue;
@@ -193,11 +163,6 @@ public class SoftBody {
 		//this.displace_player();
 	
 		this.configure();
-		
-		//System.out.println("DT Configure: " + (b - a) / 1000000.0);
-		//System.out.println("TOTAL SB UPDATE: " + (total_end - total_start) / 1000000.0);
-		
-		//System.out.println(this.nodes[0]);
 		
 		//loop 10 times
 		//update node gravity forces
@@ -225,13 +190,12 @@ public class SoftBody {
 		for (int x = 0; x<this.springs.length; x++) {
 	        if (this.springs[x] == null) continue;
 
-			//System.out.println("SPRING: " + x + "/" + this.springs.length);
-			this.springs[x].update();
+			this.springs[x].update(this.substeps);
 		}
 	}
 	public void integrate_nodes(double dt) {
 		for (int x = 0; x<this.nodes.length; x++) 
-			this.nodes[x].update(dt);
+			this.nodes[x].update(dt, this.substeps);
 	}
 	
 	public int closest_side() {
@@ -249,13 +213,10 @@ public class SoftBody {
 		return idx;
 	}
 	
-	public void displace_player() {
+	/*public void displace_player() {
 		int count = 0;
 		while (count <= 10 && Game.player.get_pol().intersect(this.pol)) {
-			//get closest segment
-			
-			System.out.println("COUNT: " + count + " ID: " + this.id);
-			
+			//get closest segment			
 			
 			int idx = this.closest_side();
 			
@@ -284,6 +245,66 @@ public class SoftBody {
 			
 			count++;
 		}
+	}*/
+	
+	public void displace_player() {
+	    if (!Game.player.get_pol().intersect(this.pol)) return;
+
+	    int count = 0;
+	    while (count <= 10 && Game.player.get_pol().intersect(this.pol)) {
+	        int idx = this.closest_side();
+
+	        Node na = this.nodes[idx];
+	        Node nb = this.nodes[(idx + 1) % this.external_nodes];
+
+	        Vector2 normal = this.pol.sides[idx].norm();
+
+	        // push player out
+	        Game.player.collider.move(normal._mult(1));
+
+	        // --- masses ---
+	        double mp = Game.player.mass;
+	        double mna = na.type.equals("node") ? na.mass : Double.MAX_VALUE;
+	        double mnb = nb.type.equals("node") ? nb.mass : Double.MAX_VALUE;
+	        // t = 0.5: player hits middle of edge
+	        double t = 0.5;
+	        double me = (1 - t) * mna + t * mnb; // effective edge mass
+
+	        // --- velocities ---
+	        // player total velocity (vel + momentum), in player's frame units (pixels/frame)
+	        Vector2 vp = Vector2.add(Game.player.vel, Game.player.momentum);
+	        Vector2 ve = Vector2.add(na.vel._mult(1 - t), nb.vel._mult(t));
+
+	        Vector2 vRel = Vector2.sub(vp, ve);
+	        double vn = Vector2.dot(vRel, normal);
+
+	        if (vn < 0) {
+	            final double ELASTICITY = 0.3;
+
+	            double invMp = 1.0 / mp;
+	            double invMe = (me == Double.MAX_VALUE) ? 0.0 : 1.0 / me;
+	            double j = -(1 + ELASTICITY) * vn / (invMp + invMe);
+
+	            Vector2 impulse = normal._mult(j);
+
+	            // apply to player — split between vel and momentum proportionally
+	            double vp_len = vp.l();
+	            double vel_frac = vp_len > 1e-3 ? Game.player.vel.l() / vp_len : 1.0;
+	            double mom_frac = 1.0 - vel_frac;
+
+	            Game.player.vel.add(impulse._mult(invMp * vel_frac));
+	            Game.player.momentum.add(impulse._mult(invMp * mom_frac));
+
+	            // apply to edge nodes
+	            if (me != Double.MAX_VALUE) {
+	                Vector2 nodeImpulse = impulse._mult(-invMe);
+	                if (na.type.equals("node")) na.vel.add(nodeImpulse._mult(1 - t));
+	                if (nb.type.equals("node")) nb.vel.add(nodeImpulse._mult(t));
+	            }
+	        }
+
+	        count++;
+	    }
 	}
 	
 	
@@ -378,119 +399,7 @@ public class SoftBody {
 	public boolean intersect(SoftBody in) {
 		return this.pol.intersect(in.pol);
 	}
-	
-	/*public void displace(SoftBody in) {
-		
-		if (!in.pol.intersect(this.pol)) return;
-		//displacing our nodes out from the softbody in
-		for (int x = 0; x<this.nodes.length; x++) {
-			if (!in.pol.intersect(this.nodes[x].pos)) continue;
-			
-			int index = 0;
-			double pb = 99999999;
-			
-			Vector2 p = new Vector2();
-			
-			
-			for (int i = 0; i<in.pol.sides.length; i++) {
-				Vector2 pnt = Line.find_node_on_line(in.pol.sides[i], this.nodes[x].pos);
-				//using sign filter out any points outside the polygon
-				//acc irrelevant
-				
-				
-				
-				
-				
-				//if (Vector2.dot(Vector2.sub(, pnt)))
-				
-				//if (Vector2.dot(Vector2.sub(pnt, this.nodes[x].pos), Vector2.sub(this.nodes[x].pos, in.pos)) < 0) continue;
-				
-				double temp = Vector2.dist(this.nodes[x].pos, pnt);
 
-				//double temp = Math.signum(Vector2.dot(in, in)) * Vector2.dist(in, Line.find_node_on_line(this.sides[x], in));
-				if (temp < pb) {
-					p = pnt;
-					index = x;
-					pb = temp;
-				}
-			}
-			
-			Line line = in.pol.sides[index];
-			
-			Vector2 n = Vector2.sub(p, this.nodes[x].pos).norm();
-			
-			double t = Vector2.dist(line.a, p) / Vector2.dist(line.a, line.b);
-			
-			if (Vector2.dist(line.a, line.b) < 1e-3) t = 0;
-			
-			double displacement_constant = 2.0 / 3;
-			
-			double da = (1 - t) * displacement_constant * pb;
-			double dc = t * displacement_constant * pb;
-			double db = pb - da - t * (dc - da);
-			
-			final double FDAMP = 1, VDAMP = 0.60;
-			
-			long time_a = System.nanoTime();
-			
-			Vector2 ve1 = n._mult(db), ve2 = n._mult(-da), ve3 = n._mult(-dc);
-			
-			this.nodes[x].force = new Vector2(0, 0);
-			in.nodes[index].force = new Vector2(0, 0);
-			in.nodes[(index + 1) % in.nodes.length].force = new Vector2(0, 0);
-			
-			//displace positions
-			//this.nodes[x].pos.set(p);
-			
-			this.nodes[x].pos.set(p);
-			//in.nodes[index].pos.add(ve2);//.set(Vector2.add(in.nodes[index].pos, ve2));
-			//in.nodes[(index + 1) % in.nodes.length].pos.add(ve3);//.set(Vector2.add(in.nodes[(index + 1) % in.nodes.length].pos, ve3));
-			//this.nodes[x].pos.add(ve1);//.set(Vector2.add(this.nodes[x].pos, ve1));
-			
-			//calculate new velocities
-			
-			final double ELASTICITY = 0.3; 
-			Vector2 V1 = this.nodes[x].vel;
-
-			// Calculate the relative velocity along the normal (V_rel_n = V1_n)
-			double vn = Vector2.dot(V1, n);
-
-			// If the penetrating node is still moving INTO the other body (negative velocity):
-			if (vn < 0) {
-			    // Calculate the impulse magnitude (J) needed to reverse the velocity
-			    // J = (-(1 + e) * V_rel_n) / (1/m1 + 1/m2)
-			    // Assuming m2 (the segment mass) is large/infinite for simplicity, m2 drops out.
-			    // J = -(1 + e) * vn * m1 
-			    
-			    // Instead of full impulse, just apply damped reflection to the normal component.
-			    Vector2 V_normal = n._mult(vn);
-			    
-			    // V_new_normal = -E * V_old_normal
-			    Vector2 V_new_normal = V_normal._mult(-ELASTICITY); 
-			    
-			    // Total impulse applied to V1: V_new_normal - V_old_normal
-			    Vector2 impulse = Vector2.sub(V_new_normal, V_normal);
-			    
-			    // Apply impulse to the penetrating node's velocity
-			    this.nodes[x].vel.add(impulse);
-
-			    // Apply damping to stop excessive sliding/energy transfer
-			    this.nodes[x].vel = this.nodes[x].vel._mult(VDAMP);
-			    
-			    // Since the segment nodes (in.nodes[index], in.nodes[index+1]) are part of another soft body, 
-			    // simply damping them slightly is often enough to prevent secondary explosion.
-			    in.nodes[index].vel = in.nodes[index].vel._mult(0.9);
-			    in.nodes[(index + 1) % in.nodes.length].vel = in.nodes[(index + 1) % in.nodes.length].vel._mult(0.9);
-			}
-			
-			long time_b = System.nanoTime();
-			
-			//System.out.println("DT COL: " + (time_b - time_a) / 1000000.0);
-			
-			
-			
-		}
-	}*/
 	public void displace(SoftBody in) {
 
 	    if (!in.pol.intersect(this.pol)) return;
@@ -591,7 +500,6 @@ public class SoftBody {
 	
 	//draw TODO: make this work with proper texture rendering
 	public void draw(Graphics g, JPanel pane, double xpos, double ypos, String location) {
-		for (int x = 0; x<this.nodes.length; x++) System.out.println(this.nodes[x]);
 		//if (!(this.id == 2 || this.id == 3 || this.id == 4 || this.id == 6 || this.id == 14)) return;
 		
 		int[][] temp = this.to_polygon(pane, xpos, ypos, location);
@@ -601,7 +509,7 @@ public class SoftBody {
 		g.setColor(Color.blue);		
 		g.drawPolygon(temp[0], temp[1], this.external_nodes);
 		
-		if (false) return;
+		if (!Game.debug_mode) return;
 		
 		for (int x = 0; x<this.frame_inds.length; x++) {
 			temp = this.to_polygon(this.rest_pos[x], pane, xpos, ypos, location);

@@ -40,7 +40,7 @@ public class Player extends Rectangle{
 	public Vector2 vel = new Vector2(0, 0);
 	public Vector2 momentum = new Vector2(0, 0);
 	
-	public double mass = 5.0;
+	public double mass = 3;
 	
 	
 	//extra bs

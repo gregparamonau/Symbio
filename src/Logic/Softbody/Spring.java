@@ -34,27 +34,25 @@ public class Spring {
 	
 	//update (apply forces to nodes)
 	
-	public void update() {
+	public void update(int substeps) {
 		if (this.a.type.equals("node") && this.b.type.equals("node")) {
-			double ds = this.length() - this.rest_length, kd = 1.75;//kd = damping factor
+			double ds = this.length() - this.rest_length;
+			double kd = 1.75 / substeps;
+			
 			Vector2 dir = Vector2.sub(this.b.pos, this.a.pos).norm();
 			//spring force
 			Vector2 Fs = dir._mult(ds * k);
-			System.out.println("SPRING43: ds: " + ds + " FS: " + Fs);
 			//drag force
 			//TBD
 			Vector2 Fd = dir._mult(Vector2.dot(dir, Vector2.sub(this.b.vel, this.a.vel)) * kd);
-			System.out.println("SPRING47: BVEL: " + this.b.vel + " AVEL: " + this.a.vel);
-			System.out.println("SPRING48: " + Fd);
 			
 			Vector2 F = Vector2.add(Fs, Fd);
 			//Vector2 Fd = ;//Vector2.add(this.a.vel.mult(-), Fs)
 			
-			System.out.println("SPRING50: " + F);
 			this.a.force.add(F);
 			this.b.force.add(F._mult(-1));
 			
-			this.shorten(this.length() - this.rest_length * max_length);
+			this.shorten((this.length() - this.rest_length * max_length) / substeps);
 			return;
 		}
 		
