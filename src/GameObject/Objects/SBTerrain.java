@@ -15,6 +15,7 @@ import Logic.Softbody.SoftBody;
 import Main.Game;
 import Player.Player;
 import Rendering.Camera;
+import DataManager.DataManager;
 
 public class SBTerrain extends GameObject{
 	public  double radius;
@@ -33,7 +34,7 @@ public class SBTerrain extends GameObject{
 		};
 		
 		System.out.println("STARTING SB");
-		this.sb = new SoftBody(new Vector2(this.pos), "/Users/gregoryparamonau/DATA_FILES/sb_test.txt", id);
+		this.sb = new SoftBody(new Vector2(this.pos), DataManager.DATA_FOLDER + "/sb_test.txt", id);
 		//this.sb = new SoftBody(new Vector2(x, y), r, id);
 		
 		this.start_nodes();
@@ -52,7 +53,7 @@ public class SBTerrain extends GameObject{
 	}
 	
 	public void start() {		
-		this.sb = new SoftBody(new Vector2(this.pos), "/Users/gregoryparamonau/DATA_FILES/sb_test.txt", id);
+		this.sb = new SoftBody(new Vector2(this.pos), DataManager.DATA_FOLDER + "/sb_test.txt", id);
 		this.pol = null;
 	}
 	

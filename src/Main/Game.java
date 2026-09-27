@@ -56,6 +56,7 @@ public class Game {
 		double delta_time = 0;
 		
 		do {
+			long cc = System.nanoTime();
 			long start = System.nanoTime();
 			//pause logic			
 			if (UI.in_pause_menu) {
@@ -126,10 +127,12 @@ public class Game {
 			//Runtime runtime = Runtime.getRuntime();
 			//long usedMemory = runtime.totalMemory() - runtime.freeMemory(); 
 			//System.out.println("Used Heap Memory: " + (usedMemory / (1024 * 1024)) + " MB");
-
-			
+			long temp = Math.max(1000/frame_rate - (b -     a), 0);
 			if (slow) try {Thread.sleep(500);}catch(Exception e) {e.printStackTrace();}
-			else try {Thread.sleep(Math.max(1000/frame_rate - (b -     a), 0)); }catch(Exception e) {e.printStackTrace();}
+			else try {Thread.sleep(Math.max(1000/frame_rate - (b -     a) - 1, 0)); }catch(Exception e) {e.printStackTrace();}
+			
+			long dd = System.nanoTime();
+			System.out.println("=============================" + (dd - cc) / 1000000.0 + " " + temp);
 		}while(true);
 	}
 	

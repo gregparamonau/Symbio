@@ -15,8 +15,9 @@ import Logic.Collision.Rectangle;
 
 public class DataManager {
 	static int room_num;
-	public static String DATA_FILE = System.getProperty("user.home") + File.separator + "DATA_FILES" + File.separator + "save_game.txt";
-	public static String BACKUP = System.getProperty("user.home") + File.separator + "DATA_FILES" + File.separator + "backup.txt";
+	public static String DATA_FOLDER = System.getProperty("user.home") + File.separator + "DATA_FILES";
+	public static String DATA_FILE = DATA_FOLDER + File.separator + "save_game.txt";
+	public static String BACKUP = DATA_FOLDER + File.separator + "backup.txt";
 
 	//ALL TOGETHER
 	
