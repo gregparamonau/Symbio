@@ -8,8 +8,7 @@ import java.io.FileWriter;
 
 public class Settings {
 	//
-	//public static String settings_save = System.getProperty("user.home") + File.separator + "DATA_FILES" + File.separator + "settings.txt";
-	public static String settings_save = "/DATA_FILES/settings.txt";
+	public static String settings_save = System.getProperty("user.home") + File.separator + "DATA_FILES" + File.separator + "settings.txt";
 	//game
 	public static int up_key = 38;
 	public static int down_key = 40;
